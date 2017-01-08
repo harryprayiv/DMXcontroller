@@ -15,9 +15,10 @@
       can also be set for analog input (maintaining stability in conversion)
 
    IN THE WORKS:
-  - changing all MIDI to DMX 
-  - renaming some variables like myButt to less irreverant language ;)
   - assessing if I need a certain item due to the differences between MIDI and DMX
+  - changing the way the code works in places to suit DMX more
+  - 16 bit values by spreading 255 across two channels
+  - DMX timing variables and state machine
 
     IN THE WORKS (in the repository this is ported from):
   - Support for piezos
