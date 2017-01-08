@@ -26,7 +26,10 @@
 
 
 1.0.0 - changed all instances of 'MIDI' to 'DMX'
-  
+      - changed "Control" to "Channel"
+      - changed "myButt" to "userButton" 
+      - renamed "DMXnote" to "DMXCue"
+      - increased values to 16 bit (more variable changes to come)
   
 
   
