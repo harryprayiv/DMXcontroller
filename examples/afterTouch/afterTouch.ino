@@ -8,13 +8,13 @@ const int FSRpin3 = A3;
 unsigned long previousMillis;
 int lastAft = 0;
 int maxValue = -1;
-DMXnote* notes[4];       // An array of pointers to your inputs
+DMXchannel* notes[4];       // An array of pointers to your inputs
 
 void setup(){
-  notes[0] = new DMXnote(FSRpin0, 40, true);
-  notes[1] = new DMXnote(FSRpin1, 45, true);
-  notes[2] = new DMXnote(FSRpin2, 50, true);
-  notes[3] = new DMXnote(FSRpin3, 55, true);
+  notes[0] = new DMXchannel(FSRpin0, 40, true);
+  notes[1] = new DMXchannel(FSRpin1, 45, true);
+  notes[2] = new DMXchannel(FSRpin2, 50, true);
+  notes[3] = new DMXchannel(FSRpin3, 55, true);
 
   // Use the rangeFinder example to find the usable range of
   // your sensors and enter it here.
