@@ -87,13 +87,12 @@ enum pgmMode {
 pgmMode controlMode = KPD_MODE;
 // __________________________________DISPLAY MODES___________________________
 enum displayMode {
-    POCKONSOLE,
+    POCKONSOLED,
     SERIALDEBUG
 };
 displayMode display = SERIALDEBUG;
 // __________________________________KEYPAD PROGRESS__________________________
 enum kpdProgress {
-    FADER_MODE,
     NO_CMD,
     DMXCH_ONE,
     DMXCH_TWO,
@@ -122,12 +121,12 @@ byte colPins[COLS] = {5, 4, 3, 2}; //connect to the column pinouts of the keypad
 Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
 
 char chOneKpdChar[5];           // first channel in commmand
-int channelOneInt;                // storage for the array of characters into an array
+int channelOneInt;                // storage for the array of characters into an integer
 
-int intCount = 0;      // initializes the integer count at 0
+int intCount = 0;      // initializing the integer count at 0
 
 char chTwoKpdChar[5];           // second channel in commmand
-int channelTwoInt;                // storage for the array of characters into an array
+int channelTwoInt;                // storage for the array of characters into an integer
 
 char intensityString[9];           // first channel in commmand
 float kpdIntensityFloat;      // first intensity channel
@@ -136,8 +135,7 @@ float kpdIntensityFloat;      // first intensity channel
 //___________________________
 
 void setup() {
-    Serial.begin(9600);
-    
+    Serial.begin(9600);   
     Dmx.setMode(TeensyDmx::DMX_OUT);  // Teensy DMX Declaration of Output
     analogReadRes(16);
     analogReadAveraging(8);
@@ -146,12 +144,10 @@ void setup() {
     u8g2.sendBuffer();   // transfer internal memory to the display
     u8g2.clearBuffer();
     delay(1000);
-
 }
 
 void loop(){
-    pockonsoleDMX(KPD_MODE);
-    
+    pockonsoleDMX(KPD_MODE);   
 }
 
 
@@ -159,25 +155,24 @@ void loop(){
 /* function containing mode switching*/
 void pockonsoleDMX(pgmMode mode){
     switch (mode) {
-        case FADER_MODE:
+        case FADER_MODE:{
             fadersToDmxWscaler(16, 9);
             u8g2.sendBuffer();   // transfer internal memory to the display
             u8g2.clearBuffer();
             break;
-            
-        case KPD_MODE:                        // Channel Assignment command
+        } 
+        case KPD_MODE:{                        // Channel Assignment command
             char key = keypad.getKey();
             if (key != NO_KEY){
                 kpdToCommand(key);
-            }
-            break;
-            
-        case KPDFADER_MODE:                  // Channel Assignment command
+            }break;
+        }
+        case KPDFADER_MODE: {                 // Channel Assignment command
             char key = keypad.getKey();
             if (key != NO_KEY){
                 kpdToCommand(key);
-            }
-            break;
+            }break;
+        }
     }
 }
 
@@ -220,6 +215,10 @@ void keypadLogic(bool isAnInteger, char kpdInput){
                 kpdState = NO_CMD;
                 break;
             }else {
+                if (kpdInput == '0'){       //don't count a zero as the first integer in the array
+                  kpdState = NO_CMD;
+                  break; 
+                }
                 chOneKpdChar[intCount] = kpdInput;
                 intCount++;
                 kpdState = DMXCH_ONE;
@@ -230,19 +229,22 @@ void keypadLogic(bool isAnInteger, char kpdInput){
             if (isAnInteger == false){                                      // is this an integer?
                 /*___________AT__________________________*/
                 if ((kpdInput == '@') && (intCount > 0)){  // if it is '@' and there are more than 0 integers
-                    channelOneInt = atoi (chOneKpdChar); intCount = 0;      //parse and zero the int Count
-                    if (channelOneInt > 512){
-                        channelOneInt = 512;
+                    channelOneInt = atoi (chOneKpdChar);  //parse array into an int
+                    intCount = 0;      //zero the int Count
+                    if (channelOneInt > 512){                     //greater than 512?? (one universe)
+                        channelOneInt = 512;                      // max out channel number to 512
                     }
-                    dmxSelection[channelOneInt-1] = true; selectionType = SINGLECHANNEL;// enum & select proper bool index
+                    dmxSelection[channelOneInt-1] = true;     // toggle the channel selection via a boolean in the array
+                    selectionType = SINGLECHANNEL;          // classify the command as soon as it is known
                     kpdState = DMX_INTENSITY;                  // move to the stage where you assign intensity
                     break;
                 }
                 /*___________THROUGH__________________________*/
                 if ((kpdInput == 'T') && (intCount > 0)){  // if it is 'T' and there are more than 0 integers
-                    channelOneInt = atoi (chOneKpdChar); intCount = 0;      //parse and zero the int Count
-                    if (channelOneInt > 512){
-                        channelOneInt = 512;
+                    channelOneInt = atoi (chOneKpdChar); //parse array into an int
+                    intCount = 0;      //zero the int Count
+                    if (channelOneInt > 512){             //greater than 512?? (one universe)
+                        channelOneInt = 512;              // max out channel number to 512
                     }
                     selectionType = THROUGH;   // enum & select proper bool index
                     kpdState = DMXCH_TWO;                  // move to the stage where you assign intensity
@@ -250,19 +252,21 @@ void keypadLogic(bool isAnInteger, char kpdInput){
                 }
                 /*___________AND__________________________*/
                 if ((kpdInput == '&') && (intCount > 0)){  // if it is '&' and there are more than 0 integers
-                    channelOneInt = atoi (chOneKpdChar); intCount = 0;      //parse and zero the int Count
+                    channelOneInt = atoi (chOneKpdChar);    //parse array into an int
+                    intCount = 0;      //parse and zero the int Count
                     if (channelOneInt > 512){
                         channelOneInt = 512;
                     }
-                    dmxSelection[channelOneInt-1] = true; selectionType = AND;   // enum & select proper bool index
+                    dmxSelection[channelOneInt-1] = true; 
+                    selectionType = AND;   // enum & select proper bool index
                     kpdState = DMXCH_TWO;                  // move to the stage where you assign intensity
                     break;
-                }
-                
+                }        
                 break;
             /*___________3 INTEGERS__________________________*/
             }else if (intCount == 2){                           //more than 2 integer places
-                chOneKpdChar[intCount - 2] = chOneKpdChar[intCount - 1]; chOneKpdChar[intCount -1] = chOneKpdChar[intCount];  //shifting values to next array position
+                chOneKpdChar[intCount - 2] = chOneKpdChar[intCount - 1]; //shifting values to next array position
+                chOneKpdChar[intCount -1] = chOneKpdChar[intCount];  //shifting values to next array position
                 chOneKpdChar[intCount] = kpdInput;   // adding the char to the array
                 kpdState = DMXCH_ONE;                   // keep wrapping digits in this mode until modifier
                 intCount = 2;
@@ -294,11 +298,11 @@ void keypadLogic(bool isAnInteger, char kpdInput){
                             channelTwoInt = 512;
                         }
                         if (channelTwoInt > channelOneInt){
-                            for (int i = (channelOneInt -1); i > (channelTwoInt-1)); i++){
+                            for (int i = (channelOneInt - 1); i > (channelTwoInt-1); i++){
                                 dmxSelection[i] = true; // loop through to select all values in bool
                             }
                         }if (channelTwoInt < channelOneInt){
-                            for (int i = (channelTwoInt -1); i > (channelOneInt-1)); i++){
+                            for (int i = (channelTwoInt -1); i > (channelOneInt-1); i++){
                                 dmxSelection[i] = true; // loop through to select all values in bool
                                 }
                             }
@@ -385,9 +389,7 @@ void u8g2oledIntroPage()  {  // Pocksonole intro U8G2 stuff in a function
 void fadersToDmxWscaler(int bitRate, int masterFader){
     u8g2.clearBuffer();
     if (bitRate == 16) {
-
-        scalerVal = (floatmap(analogRead(analogFaderMap[(masterFader-1)]), 1, 65536, 65025, 1) / 65025);// MasterFader__________
-        
+        scalerVal = (floatmap(analogRead(analogFaderMap[(masterFader-1)]), 1, 65536, 65025, 1) / 65025);// MasterFader__________      
         if (scalerVal <= .01) {                  // eliminate small values to avoid flickering (I may eventually do smoothing instead)
             scalerVal = 0;
         };
@@ -515,45 +517,39 @@ void fadersToDmxWscaler(int bitRate, int masterFader){
     }  
 }
     
-// to call this function: subMasterWscaler(9,1,25,37); which would make the first fader control channels 25 through 62
+// to call this function: subMasterWscaler(1,25,37,9); first fader controls channels 25 through 37 with #9 as master fader
     
-void subMasterWscaler(int masterFader,, int sMfader, int dmxStart, int dmxFootPrint){
+void subMaster(int dmxStart, int dmxFootPrint, int sMfader, int masterFader){
     scalerVal = (floatmap(analogRead(masterFader), 1, 65536, 65025, 1) / 65025);   // Master Fader__________________
     if (scalerVal <= .01) {              // eliminate small values to avoid flickering
         scalerVal = 0;
-    };
-    for (int i = (dmxStart-1); i = (dmxFootPrint - dmxStart); ++i) {
+    }
+    for (int i = (dmxStart - 1); i > (dmxFootPrint - dmxStart); ++i) {
         dmxVal[i] = round(floatmap(analogRead(sMfader), 1, 65536, 255, 1) * scalerVal);
         if (dmxVal[i] < 2) {                  // eliminate small values to avoid flickering (I may eventually do smoothing instead)
             dmxVal[i] = 0;
-        };
+        }
         Dmx.setDmxChannel((i+1), dmxVal[i]);
     }
 }
 
 
-//void dmxDisplay(int address = 0, int value = 0, int x = 0, int y = 10, char[] charinput = ""){
-//    switch (displayMode) {
-//        //NO_CMD______________________________________
-//        case POCKONSOLE:
-//            u8g2.clearBuffer();
-//
-//            u8g2.setFont(u8g2_font_5x8_mn);  // choose a suitable font
-//            u8g2.setCursor(x, y);
-//            u8g2.print(value);
-//            
-//            u8g2.setFont(u8g2_font_profont15_tf);  // choose a suitable font
-//            u8g2.setCursor((x + 2), ((y + 2) * 2));
-//            u8g2.print(address);
-//            
-//            u8g2.sendBuffer();   // transfer internal memory to the display
-//
-//            
-//            break;
-//        case SERIALDEBUG;
-//            Serial.println(charinput);
-//            break;
-//    
-//    }
-//}
+void dmxDisplay(String charinput){
+    switch (display) {
+        //POCKONSOLED______________________________________
+        case POCKONSOLED:{
+            u8g2.clearBuffer();        
+            u8g2.setFont(u8g2_font_profont15_tf);  // choose a suitable font
+            u8g2.setCursor(0, 10);
+            u8g2.print(charinput);
+            u8g2.sendBuffer();   // transfer internal memory to the display
+            break;
+        }
+        //SERIALDEBUG______________________________________
+        case SERIALDEBUG:{
+            Serial.println(charinput);
+            break;  
+        }
+    }
+}
 
