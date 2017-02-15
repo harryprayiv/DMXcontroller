@@ -74,7 +74,7 @@ enum selectionMode {
     NONE,
     SINGLECHANNEL,
     AND,
-    THROUGH,
+    THROUGH
 };
 selectionMode selectionType = NONE;
 // __________________________________PROGRAM MODES___________________________
@@ -87,9 +87,9 @@ pgmMode controlMode = KPD_MODE;
 // __________________________________DISPLAY MODES___________________________
 enum displayMode {
     POCKONSOLED,
-    SERIALDEBUG
+    SERIALDISPLAY
 };
-displayMode display = SERIALDEBUG;
+displayMode display = SERIALDISPLAY;
 // __________________________________KEYPAD PROGRESS__________________________
 enum kpdProgress {
     NO_CMD,
@@ -97,7 +97,7 @@ enum kpdProgress {
     DMXCH_TWO,
     DMX_INTENSITY
 };
-kpdProgress kpdState = NO_CMD;
+kpdProgress kpdState;
 
 //___________________________U8G2 CONSTRUCTOR (declares pinout for Teensy 3.6 with the U8g2lib.h OLED library)
 U8G2_SSD1306_128X64_NONAME_F_4W_SW_SPI u8g2(U8G2_R0, /* clock=*/ 13, /* data=*/ 11, /* cs=*/ 34, /* dc=*/ 32, /* reset=*/ 33);
@@ -133,15 +133,11 @@ float kpdIntensityFloat;      // first intensity channel
 //___________________________
 
 void setup() {
-    Serial.begin(9600);
     Dmx.setMode(TeensyDmx::DMX_OUT);  // Teensy DMX Declaration of Output
     analogReadRes(16);
     analogReadAveraging(8);
-    u8g2.begin();
-    u8g2oledIntroPage();
-    u8g2.sendBuffer();   // transfer internal memory to the display
-    u8g2.clearBuffer();
-    delay(1000);
+    introPage(display);
+    delay(500);
 }
 
 void loop() {
@@ -334,30 +330,31 @@ void keypadLogic(bool isAnInteger, char kpdInput, pgmMode mode) {
                             kpdIntensityFloat = atof (intensityString);
                             dmxDisplay(channelOneInt, SINGLECHANNEL, channelTwoInt, intensityString);
                             kpdSubIntensity(channelOneInt, SINGLECHANNEL, 0, kpdIntensityFloat);
-                            kpdState = NO_CMD;                  // move to the stage where you assign intensity
+                            kpdState = NO_CMD;                  
+                            selectionType = NONE; channelOneInt = 0; channelTwoInt = 0; intensityString[0] = '0';
                             break;
                         }if (selectionType == AND) {
                             intCount = 0;
                             kpdIntensityFloat = atof (intensityString);
                             dmxDisplay(channelOneInt, AND, channelTwoInt, intensityString);
                             kpdSubIntensity(channelOneInt, AND, channelTwoInt, kpdIntensityFloat);
-                            kpdState = NO_CMD;                  // move to the stage where you assign intensity
+                            kpdState = NO_CMD;                  
                             break;
                         }if (selectionType == THROUGH) {
                             intCount = 0;
                             kpdIntensityFloat = atof (intensityString);
                             dmxDisplay(channelOneInt, THROUGH, channelTwoInt, intensityString);
                             kpdSubIntensity(channelOneInt, THROUGH, channelTwoInt, kpdIntensityFloat);
-                            kpdState = NO_CMD;                  // move to the stage where you assign intensity
+                            kpdState = NO_CMD;                  
                             break;
                         }
-                    }if (mode == KPDFADER_MODE) {       // if it is in KPD_MODE control mode
+                    }if (mode == KPDFADER_MODE) {       // if it is in KPDFADER_MODE control mode
                         if (selectionType == SINGLECHANNEL) {
                             intCount = 0;
                             int i = atoi (intensityString);
                             dmxDisplay(channelOneInt, SINGLECHANNEL, 0, (analogFaderMap[i - 1]));
                             kpdfaderSubIntensity(channelOneInt, SINGLECHANNEL, 0, (analogFaderMap[i - 1]));
-                            kpdState = NO_CMD;                  // move to the stage where you assign intensity
+                            kpdState = NO_CMD;                  
                             break;
                         }if (selectionType == AND) {
                             intCount = 0;
@@ -387,7 +384,16 @@ void keypadLogic(bool isAnInteger, char kpdInput, pgmMode mode) {
             }
             /*___________9 INTEGERS__________________________*/
             else if ((mode == KPD_MODE) && (intCount == 9)){
+                intensityString[intCount - 9] = intensityString[intCount - 8]; //shifting values to next array position
+                intensityString[intCount - 8] = intensityString[intCount -7]; //shifting values to next array position
+                intensityString[intCount - 7] = intensityString[intCount -6]; //shifting values to next array position
+                intensityString[intCount - 6] = intensityString[intCount -5]; //shifting values to next array position
+                intensityString[intCount - 5] = intensityString[intCount -4]; //shifting values to next array position
+                intensityString[intCount - 4] = intensityString[intCount -3]; //shifting values to next array position
+                intensityString[intCount - 3] = intensityString[intCount -2]; //shifting values to next array position
+                intensityString[intCount - 2] = intensityString[intCount -1]; //shifting values to next array position
                 intensityString[intCount] = kpdInput;
+                
                 kpdState = DMX_INTENSITY;
                 smpleDisplay(intensityString);
                 intCount = 9;
@@ -512,8 +518,8 @@ void smpleDisplay(String charinput) {
             u8g2.print(charinput);
             u8g2.sendBuffer();   // transfer internal memory to the display
             break;
-            //SERIALDEBUG______________________________________
-        case SERIALDEBUG:
+            //SERIALDISPLAY______________________________________
+        case SERIALDISPLAY:
             Serial.println(charinput);
             break;
     }
@@ -528,22 +534,55 @@ void dmxDisplay(int chOne, selectionMode selType, int chTwo, String intensity) {
             u8g2.setFont(u8g2_font_5x8_mn);  // choose a suitable font
             u8g2.setCursor(0, 10);
             u8g2.print(chOne);
-            u8g2.setCursor(22, 10);
-            u8g2.print(selType);
-            u8g2.setCursor(44, 10);
-            u8g2.print(chTwo);
+            switch (selType) {
+              case NONE:
+                u8g2.setFont(u8g2_font_profont15_tf);  // choose a suitable font
+                u8g2.drawStr(2, 24, "How did you get here?");        
+                break;
+              case SINGLECHANNEL:
+                break;
+              case AND:
+                u8g2.setCursor(22, 10);
+                u8g2.print(selType);
+                break;
+              case THROUGH:
+                u8g2.setCursor(22, 10);
+                u8g2.print(selType);
+                break;
+              }
+            if (selType != SINGLECHANNEL){
+              u8g2.setCursor(44, 10);
+              u8g2.print(chTwo);
+            }
             u8g2.setCursor(66, 10);
             u8g2.print(intensity);
             u8g2.sendBuffer();   // transfer internal memory to the display
             break;
-            //SERIALDEBUG______________________________________
-        case SERIALDEBUG:
+            //SERIALDISPLAY______________________________________
+        case SERIALDISPLAY:
             Serial.print(chOne);
             Serial.print(" ");
-            Serial.print(selType);
+            switch (selType) {
+              case NONE:
+                Serial.print("How did you get here? Impossible, I thought.");
+                break;
+              case SINGLECHANNEL:
+                Serial.print("@");
+                break;
+              case AND:
+                Serial.print("And");
+                break;
+              case THROUGH:
+                Serial.print("Through");
+                break;
+              }
             Serial.print(" ");
-            Serial.print(chTwo);
-            Serial.print(" ");
+            if (selType != SINGLECHANNEL){
+              Serial.print(chTwo);
+              Serial.print(" ");
+            }
+
+            Serial.print(" At ");
             Serial.print(intensity);
             Serial.println(" ");
             break;
@@ -684,22 +723,33 @@ void fadersToDmxWscaler(int bitRate, int masterFader) {
 }
 
 /* Pockonsole Intro Animation */
-void u8g2oledIntroPage()  {  // Pocksonole intro U8G2 stuff in a function
-    delay(100);
-    u8g2.setFont(u8g2_font_helvB14_tf); // choose a font
-    u8g2.drawStr(5, 21, "Pockonsole"); // write something to the internal memory
-    
-    u8g2.setFont(u8g2_font_baby_tf); // choose a font
-    u8g2.drawStr(103, 9, "V 1.0"); // write something to the internal memory
-    
-    u8g2.setFont(u8g2_font_7x13_tf); // choose a font
-    u8g2.drawStr(8, 36, "by Harry Pray IV"); // write something to the internal memory
+
+
+
+void introPage(displayMode dispmode){
+  switch (dispmode) {
+    case POCKONSOLED:
+      u8g2.begin();
+      delay(100);
+      u8g2.setFont(u8g2_font_helvB14_tf); // choose a font
+      u8g2.drawStr(5, 21, "Pockonsole"); // write something to the internal memory
+      u8g2.setFont(u8g2_font_baby_tf); // choose a font
+      u8g2.drawStr(103, 9, "V 1.9"); // write something to the internal memory
+      u8g2.setFont(u8g2_font_7x13_tf); // choose a font
+      u8g2.drawStr(8, 36, "by Harry Pray IV"); // write something to the internal memory
+      u8g2.sendBuffer();   // transfer internal memory to the display
+      delay(1000);
+      u8g2.clearBuffer();
+      break;
+    case SERIALDISPLAY:
+      Serial.begin(9600);
+      Serial.println("Pockonsole by Harry Pray IV");
+      Serial.print("Version 2.0 Beta");
+      break;
 }
+
 
 /* custom mapping for floats, which come up often in intensity values and division */
 float floatmap(float x, float in_min, float in_max, float out_min, float out_max)  {
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
-
-
-
