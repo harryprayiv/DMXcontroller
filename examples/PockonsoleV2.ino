@@ -746,6 +746,7 @@ void introPage(displayMode dispmode){
       Serial.println("Pockonsole by Harry Pray IV");
       Serial.print("Version 2.0 Beta");
       break;
+  }
 }
 
 
