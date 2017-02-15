@@ -76,20 +76,21 @@ enum selectionMode {
     AND,
     THROUGH
 };
-selectionMode selectionType = NONE;
+selectionMode selectionType;
+
 // __________________________________PROGRAM MODES___________________________
 enum pgmMode {
     FADER_MODE,
     KPD_MODE,
     KPDFADER_MODE
 };
-pgmMode controlMode = KPD_MODE;
+pgmMode controlMode;
 // __________________________________DISPLAY MODES___________________________
 enum displayMode {
     POCKONSOLED,
     SERIALDISPLAY
 };
-displayMode display = SERIALDISPLAY;
+displayMode display;
 // __________________________________KEYPAD PROGRESS__________________________
 enum kpdProgress {
     NO_CMD,
@@ -128,6 +129,11 @@ int channelTwoInt;                // storage for the array of characters into an
 
 char intensityString[9];           // first channel in commmand
 float kpdIntensityFloat;      // first intensity channel
+
+selectionType = NONE;
+controlMode = KPD_MODE;
+display = SERIALDISPLAY;
+kpdState = NO_CMD;
 
 
 //___________________________
