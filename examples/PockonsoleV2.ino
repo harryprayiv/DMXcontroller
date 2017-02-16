@@ -76,7 +76,7 @@ enum selectionMode {
     AND,
     THROUGH
 };
-selectionMode selectionType;
+selectionMode selectionType = NONE;
 
 // __________________________________PROGRAM MODES___________________________
 enum pgmMode {
@@ -84,13 +84,15 @@ enum pgmMode {
     KPD_MODE,
     KPDFADER_MODE
 };
-pgmMode controlMode;
+pgmMode controlMode = KPD_MODE;
+
 // __________________________________DISPLAY MODES___________________________
 enum displayMode {
     POCKONSOLED,
     SERIALDISPLAY
 };
-displayMode display;
+displayMode display = SERIALDISPLAY;
+
 // __________________________________KEYPAD PROGRESS__________________________
 enum kpdProgress {
     NO_CMD,
@@ -98,7 +100,7 @@ enum kpdProgress {
     DMXCH_TWO,
     DMX_INTENSITY
 };
-kpdProgress kpdState;
+kpdProgress kpdState = NO_CMD;
 
 //___________________________U8G2 CONSTRUCTOR (declares pinout for Teensy 3.6 with the U8g2lib.h OLED library)
 U8G2_SSD1306_128X64_NONAME_F_4W_SW_SPI u8g2(U8G2_R0, /* clock=*/ 13, /* data=*/ 11, /* cs=*/ 34, /* dc=*/ 32, /* reset=*/ 33);
@@ -130,10 +132,6 @@ int channelTwoInt;                // storage for the array of characters into an
 char intensityString[9];           // first channel in commmand
 float kpdIntensityFloat;      // first intensity channel
 
-selectionType = NONE;
-controlMode = KPD_MODE;
-display = SERIALDISPLAY;
-kpdState = NO_CMD;
 
 
 //___________________________
@@ -230,7 +228,7 @@ void keypadLogic(bool isAnInteger, char kpdInput, pgmMode mode) {
             if (isAnInteger == false) {                                     // is this an integer?
                 /*___________AT__________________________*/
                 if ((kpdInput == '@') && (intCount > 0)) { // if it is '@' and there are more than 0 integers
-                    smpleDisplay("SINGLECHANNEL");
+                    smpleDisplay("@");
                     channelOneInt = atoi (chOneKpdChar);  //parse array into an int
                     if (channelOneInt > 512) {                    //greater than 512?? (one universe)
                         channelOneInt = 512;                      // max out channel number to 512
@@ -289,7 +287,7 @@ void keypadLogic(bool isAnInteger, char kpdInput, pgmMode mode) {
                 if ((kpdInput == '@') && (intCount > 0)) { // if input = '@' and > than 0 integers
                     /*___________AND__________________________*/
                     if (selectionType == AND) {            // if input = 'AND'
-                        smpleDisplay("AND");
+                        smpleDisplay("At ");
                         channelTwoInt = atoi (chTwoKpdChar);  //parse array into an int
                         if (channelTwoInt > 512) {            // if input > 512
                             channelTwoInt = 512;              // make it 512
@@ -299,7 +297,7 @@ void keypadLogic(bool isAnInteger, char kpdInput, pgmMode mode) {
                         break;
                         /*___________THROUGH__________________________*/
                     } if (selectionType == THROUGH) {           // if input = 'THROUGH'
-                        smpleDisplay("THROUGH");
+                        smpleDisplay("At ");
                         channelTwoInt = atoi (chTwoKpdChar);      //parse array to an int
                         if (channelTwoInt > 512) {
                             channelTwoInt = 512;
@@ -309,6 +307,7 @@ void keypadLogic(bool isAnInteger, char kpdInput, pgmMode mode) {
                         break;
                     }
                 }
+                break;
             /*___________< 3 INTEGERS________________________*/
             }else if (intCount == 2) {                          //more than 2 integer places
                 chTwoKpdChar[intCount - 2] = chTwoKpdChar[intCount - 1]; chTwoKpdChar[intCount - 1] = chTwoKpdChar[intCount]; //shifting values to next array position
@@ -389,23 +388,14 @@ void keypadLogic(bool isAnInteger, char kpdInput, pgmMode mode) {
                 break;
             }
             /*___________9 INTEGERS__________________________*/
-            else if ((mode == KPD_MODE) && (intCount == 9)){
-                intensityString[intCount - 9] = intensityString[intCount - 8]; //shifting values to next array position
-                intensityString[intCount - 8] = intensityString[intCount -7]; //shifting values to next array position
-                intensityString[intCount - 7] = intensityString[intCount -6]; //shifting values to next array position
-                intensityString[intCount - 6] = intensityString[intCount -5]; //shifting values to next array position
-                intensityString[intCount - 5] = intensityString[intCount -4]; //shifting values to next array position
-                intensityString[intCount - 4] = intensityString[intCount -3]; //shifting values to next array position
-                intensityString[intCount - 3] = intensityString[intCount -2]; //shifting values to next array position
-                intensityString[intCount - 2] = intensityString[intCount -1]; //shifting values to next array position
-                intensityString[intCount] = kpdInput;
-                
+            else if ((mode == KPD_MODE) && (intCount > 8 )){
+                intWrap(intensityString, kpdInput, 9);
                 kpdState = DMX_INTENSITY;
                 smpleDisplay(intensityString);
                 intCount = 9;
                 break;
-            /*___________>9 INTEGERS__________________________*/
-            }else if ((mode == KPD_MODE) && (intCount < 9)){
+                    /*___________>9 INTEGERS__________________________*/
+            }else if ((mode == KPD_MODE) && (intCount < 9 )){
                 intensityString[intCount] = kpdInput;
                 kpdState = DMX_INTENSITY;
                 smpleDisplay(intensityString);
@@ -414,6 +404,48 @@ void keypadLogic(bool isAnInteger, char kpdInput, pgmMode mode) {
             }
     }
 }
+
+/*wrap is still not working.
+ * 
+ * someone recommended this
+ * 
+ * 
+ 
+void shiftright (int myarray[], int size);
+
+int main (void)
+{
+int myarray []= {1, 3, 5, 7, 9};
+
+shiftright( myarray, 5);
+
+for ( int i=0; i<5; i++) 
+{
+  cout << myarray[i] << ' ';
+}
+
+return(0);
+
+}
+
+void shiftright (int myarray[], int size)
+{
+  
+int temp;
+int temp1;
+
+for (int i=0; i<(size -1); i++)
+{
+  temp =  myarray[size-1];
+  myarray[size-1] = myarray[i];
+  myarray[i] = temp;
+}
+
+
+}
+
+*/
+
 
 
 // to call this function: faderSubIntensity(1, 27, THROUGH, 1) would get you a submaster of channels 1 through 27 on fader 1
@@ -586,9 +618,8 @@ void dmxDisplay(int chOne, selectionMode selType, int chTwo, String intensity) {
             if (selType != SINGLECHANNEL){
               Serial.print(chTwo);
               Serial.print(" ");
+              Serial.print(" @ ");     
             }
-
-            Serial.print(" At ");
             Serial.print(intensity);
             Serial.println(" ");
             break;
@@ -759,4 +790,12 @@ void introPage(displayMode dispmode){
 /* custom mapping for floats, which come up often in intensity values and division */
 float floatmap(float x, float in_min, float in_max, float out_min, float out_max)  {
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+void intWrap(String numToWrap, char inputNum, int spaces){
+  for (int i = 0; (i < spaces); i++){
+  numToWrap[i] = numToWrap[i+1]; //shifting values to next array position  
+  }
+  numToWrap[spaces] = inputNum;   // adding the char to the array 
+
 }
