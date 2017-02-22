@@ -53,6 +53,8 @@
 #ifdef U8X8_HAVE_HW_I2C
 #include <Wire.h>
 #endif
+#ifndef Keypadlib_KEY_H_
+#define Keypadlib_KEY_H_
 
 
 /*Teensy DMX Settings_________________________________________________*/
