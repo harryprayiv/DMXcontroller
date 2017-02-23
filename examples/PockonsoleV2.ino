@@ -53,8 +53,8 @@
 #ifdef U8X8_HAVE_HW_I2C
 #include <Wire.h>
 #endif
-#ifndef Keypadlib_KEY_H_
-#define Keypadlib_KEY_H_
+//#ifndef Keypadlib_KEY_H_
+//#define Keypadlib_KEY_H_
 
 
 /*Teensy DMX Settings_________________________________________________*/
@@ -112,7 +112,7 @@ enum displayMode {
     POCKONSOLED,
     SERIALDISPLAY
 };
-displayMode display = SERIALDISPLAY;
+displayMode display = POCKONSOLED;
 
 // __________________________________KEYPAD PROGRESS__________________________
 enum kpdProgress {
@@ -165,32 +165,43 @@ void setup() {
     analogReadAveraging(8);
     introPage(display);
     delay(500);
+    delay(100);
+    u8g2.clearBuffer();
 }
 
 void loop() {
-    if (modeChosen == false){
+   char key = keypad.getKey();
+   if (modeChosen == false){
+
         if (key != NO_KEY) {
             kpdToCommand(key);
+            
         }
     }else {
-        switch (controlMode) {
-            case FADER_MODE:
-                fadersToDmxWscaler(16,9);
-                break;
-            case KPD_MODE,
-                if (key != NO_KEY) {
-                    kpdToCommand(key);
-                    break;
+    switch (controlMode) {
+           case FADER_MODE:
+               u8g2.clearBuffer();
+               fadersToDmxWscaler(16,9);
+               
+               
+               break;
+               
+           case KPD_MODE:
+               if (key != NO_KEY) {
+                  kpdToCommand(key);
                 }
+                break;
+            
             case KPDFADER_MODE:
                 if (key != NO_KEY) {
                     kpdToCommand(key);
-                    break;
+
                 }
+                break;
         }
-        break;
     }
 }
+
 
 /*//a simple display for keys being entered
  void modeMenuDisplay(String charinput) {
@@ -248,21 +259,21 @@ void keypadLogic(bool isAnInteger, char kpdInput) {
             if ((isAnInteger == false) && (pgmModeSelectionInt > 0)) {
                 if (kpdInput == 'E') {
                     if (pgmModeSelectionInt == 1){
-                        smpleDisplay("Fader Mode");
+                        smpleDisplay("Fader Mode",true,true);
                         controlMode = FADER_MODE;
-                        modeChosen == true;
+                        modeChosen = true;
                         break;
                     }if (pgmModeSelectionInt == 2){
-                        smpleDisplay("Keypad Mode");
+                        smpleDisplay("Keypad Mode",true,true);
                         controlMode = KPD_MODE;
                         kpdState = NO_CMD;
-                        modeChosen == true;
+                        modeChosen = true;
                         break;
                     }if (pgmModeSelectionInt == 3){
-                        smpleDisplay("Keypad Fader Mode");
+                        smpleDisplay("Keypad Fader Mode",true,true);
                         controlMode = KPDFADER_MODE;
                         kpdState = NO_CMD;
-                        modeChosen == true;
+                        modeChosen = true;
                         break;
                     }
                     kpdState = MODE_SELECT; // any non-integer than "Enter" won't work here
@@ -273,21 +284,21 @@ void keypadLogic(bool isAnInteger, char kpdInput) {
             }else {
                 if (kpdInput == '1') {      //don't count a zero as the first integer in the array
                     pgmModeSelectionInt = 1;
-                    smpleDisplay(pgmModeSelectionInt);
+                    smpleDisplay(pgmModeSelectionInt,true,true);
                     kpdState = MODE_SELECT;
                     break;
                 }if (kpdInput == '2') {      //2 equals
                     pgmModeSelectionInt = 2;
-                    smpleDisplay(pgmModeSelectionInt);
+                    smpleDisplay(pgmModeSelectionInt,true,true);
                     kpdState = MODE_SELECT;
                     break;
                 }if (kpdInput == '3') {      //don't count a zero as the first integer in the array
                     pgmModeSelectionInt = 3;
-                    smpleDisplay(pgmModeSelectionInt);
+                    smpleDisplay(pgmModeSelectionInt,true,true);
                     kpdState = MODE_SELECT;
                     break;
                 }else {
-                    smpleDisplay("Number not allowed");
+                    smpleDisplay("Number not allowed",true,true);
                     kpdState = MODE_SELECT;
                     break;
                 }
@@ -303,7 +314,7 @@ void keypadLogic(bool isAnInteger, char kpdInput) {
                     break;
                 }
                 chOneKpdChar[intCount] = kpdInput;
-                smpleDisplay(chOneKpdChar);
+                smpleDisplay(chOneKpdChar,true,true);
                 intCount++;
                 kpdState = DMXCH_ONE;
                 break;
@@ -313,7 +324,7 @@ void keypadLogic(bool isAnInteger, char kpdInput) {
             if (isAnInteger == false) {                                     // is this an integer?
                 /*___________AT__________________________*/
                 if ((kpdInput == '@') && (intCount > 0)) { // if it is '@' and there are more than 0 integers
-                    smpleDisplay(" @ ");
+                    smpleDisplay(" @ ",true,true);
                     channelOneInt = atoi (chOneKpdChar);  //parse array into an int
                     if (channelOneInt > 512) {                    //greater than 512?? (one universe)
                         channelOneInt = 512;                      // max out channel number to 512
@@ -325,7 +336,7 @@ void keypadLogic(bool isAnInteger, char kpdInput) {
                 }
                 /*___________THROUGH__________________________*/
                 if ((kpdInput == 'T') && (intCount > 0)) { // if it is 'T' and there are more than 0 integers
-                    smpleDisplay(" thru ");
+                    smpleDisplay(" thru ",true,true);
                     channelOneInt = atoi (chOneKpdChar); //parse array into an int
                     if (channelOneInt > 512) {            //greater than 512?? (one universe)
                         channelOneInt = 512;              // max out channel number to 512
@@ -337,7 +348,7 @@ void keypadLogic(bool isAnInteger, char kpdInput) {
                 }
                 /*___________AND__________________________*/
                 if ((kpdInput == '&') && (intCount > 0)) { // if it is '&' and there are more than 0 integers
-                    smpleDisplay(" and ");
+                    smpleDisplay(" and ",true,true);
                     channelOneInt = atoi (chOneKpdChar);    //parse array into an int
                     if (channelOneInt > 512) {
                         channelOneInt = 512;
@@ -353,14 +364,14 @@ void keypadLogic(bool isAnInteger, char kpdInput) {
                 chOneKpdChar[intCount - 2] = chOneKpdChar[intCount - 1]; //shifting values to next array position
                 chOneKpdChar[intCount - 1] = chOneKpdChar[intCount]; //shifting values to next array position
                 chOneKpdChar[intCount] = kpdInput;   // adding the char to the array
-                smpleDisplay(chOneKpdChar);
+                smpleDisplay(chOneKpdChar,true,true);
                 kpdState = DMXCH_ONE;                   // keep wrapping digits in this controlModeuntil modifier
                 intCount = 2;
                 break;
                 /*___________< 3 INTEGERS________________________*/
             } else {                                                 // if we aren't overflowing, do this
                 chOneKpdChar[intCount] = kpdInput;   // adding the char to the array
-                smpleDisplay(chOneKpdChar);
+                smpleDisplay(chOneKpdChar,true,true);
                 kpdState = DMXCH_ONE;                   // stay in this controlModeuntil modifier is pressed
                 intCount++;
                 break;                                          // leave the switch
@@ -372,7 +383,7 @@ void keypadLogic(bool isAnInteger, char kpdInput) {
                 if ((kpdInput == '@') && (intCount > 0)) { // if input = '@' and > than 0 integers
                     /*___________AND__________________________*/
                     if (selectionType == AND) {            // if input = 'AND'
-                        smpleDisplay(" at ");
+                        smpleDisplay(" at ",true,true);
                         channelTwoInt = atoi (chTwoKpdChar);  //parse array into an int
                         if (channelTwoInt > 512) {            // if input > 512
                             channelTwoInt = 512;              // make it 512
@@ -382,7 +393,7 @@ void keypadLogic(bool isAnInteger, char kpdInput) {
                         break;
                         /*___________THROUGH__________________________*/
                     } if (selectionType == THROUGH) {           // if input = 'THROUGH'
-                        smpleDisplay(" at ");
+                        smpleDisplay(" at ",true,true);
                         channelTwoInt = atoi (chTwoKpdChar);      //parse array to an int
                         if (channelTwoInt > 512) {
                             channelTwoInt = 512;
@@ -397,14 +408,14 @@ void keypadLogic(bool isAnInteger, char kpdInput) {
             }else if (intCount == 2) {                          //more than 2 integer places
                 chTwoKpdChar[intCount - 2] = chTwoKpdChar[intCount - 1]; chTwoKpdChar[intCount - 1] = chTwoKpdChar[intCount]; //shifting values to next array position
                 chTwoKpdChar[intCount] = kpdInput;   // adding the char to the array
-                smpleDisplay(chTwoKpdChar);
+                smpleDisplay(chTwoKpdChar,true,true);
                 kpdState = DMXCH_TWO;                   // keep wrapping digits in this controlModeuntil modifier
                 intCount = 2;
                 break;
                 /*___________< 3 INTEGERS________________________*/
             } else {                                                 // if we aren't overflowing, do this
                 chTwoKpdChar[intCount] = kpdInput;   // adding the char to the array
-                smpleDisplay(chTwoKpdChar);
+                smpleDisplay(chTwoKpdChar,true,true);
                 kpdState = DMXCH_TWO;                   // stay in this controlModeuntil modifier is pressed
                 intCount++;
                 break;                                          // leave the switch
@@ -468,22 +479,22 @@ void keypadLogic(bool isAnInteger, char kpdInput) {
                 intCount = 0;
                 intensityString[intCount] = kpdInput;
                 kpdState = DMX_INTENSITY;
-                smpleDisplay(intensityString);
-                intCount = 0;
+                smpleDisplay(intensityString,true,true);
+                intCount = 1;
                 break;
             }
             /*___________9 INTEGERS__________________________*/
             else if ((controlMode== KPD_MODE) && (intCount > 8 )){
                 intWrap(intensityString, kpdInput, 9);
                 kpdState = DMX_INTENSITY;
-                smpleDisplay(intensityString);
+                smpleDisplay(intensityString,true,true);
                 intCount = 9;
                 break;
                 /*___________>9 INTEGERS__________________________*/
             }else if ((controlMode== KPD_MODE) && (intCount < 9 )){
                 intensityString[intCount] = kpdInput;
                 kpdState = DMX_INTENSITY;
-                smpleDisplay(intensityString);
+                smpleDisplay(intensityString,true,true);
                 intCount++;
                 break;
             }
@@ -630,16 +641,20 @@ void kpdSubIntensity(int chOne, selectionMode selType, int chTwo, float intensit
     }
 }
 
-//a simple display for keys being entered
-void smpleDisplay(String charinput) {
+//a simple display for keys being entered that allows me to prevent U8G2 from sending and clearing the buffer without affecting the serial functions.
+void smpleDisplay(String charinput, bool clear, bool send) {
     switch (display) {
             //POCKONSOLED______________________________________
         case POCKONSOLED:
-            u8g2.clearBuffer();
+            if (clear == true){
+              u8g2.clearBuffer();   // clear internal memory on the display
+            }
             u8g2.setFont(u8g2_font_profont15_tf);  // choose a suitable font
             u8g2.setCursor(0, 10);
             u8g2.print(charinput);
-            u8g2.sendBuffer();   // transfer internal memory to the display
+            if (send == true){
+              u8g2.sendBuffer();   // transfer internal memory to the display
+            }
             break;
             //SERIALDISPLAY______________________________________
         case SERIALDISPLAY:
@@ -996,20 +1011,29 @@ void introPage(displayMode dispmode){
         case POCKONSOLED:
             u8g2.begin();
             delay(100);
-            u8g2.setFont(u8g2_font_helvB14_tf); // choose a font
-            u8g2.drawStr(5, 21, "Pockonsole"); // write something to the internal memory
-            u8g2.setFont(u8g2_font_baby_tf); // choose a font
-            u8g2.drawStr(103, 9, "V 1.9"); // write something to the internal memory
-            u8g2.setFont(u8g2_font_7x13_tf); // choose a font
-            u8g2.drawStr(8, 36, "by Harry Pray IV"); // write something to the internal memory
+            u8g2.setFontMode(1);  /* activate transparent font mode */
+            u8g2.setDrawColor(1); /* color 1 for the box */
+            u8g2.drawBox(0, 2, 128, 50);
+            u8g2.setFont(u8g2_font_7x13_tf);
+            u8g2.setDrawColor(0);
+            u8g2.drawStr(5, 18, "Pockonsole");
+            u8g2.setDrawColor(1);
+            u8g2.drawStr(5, 33, "by Harry");
+            u8g2.setDrawColor(2);
+            u8g2.drawStr(5, 48, "Pray IV");
+//            u8g2.setFont(u8g2_font_helvB14_tf); // choose a font
+//            u8g2.drawStr(5, 21, "Pockonsole"); // write something to the internal memory
+//            u8g2.setFont(u8g2_font_baby_tf); // choose a font
+//            u8g2.drawStr(103, 9, "V 1.9"); // write something to the internal memory
+//            u8g2.setFont(u8g2_font_7x13_tf); // choose a font
+//            u8g2.drawStr(8, 36, "by Harry Pray IV"); // write something to the internal memory
             u8g2.sendBuffer();   // transfer internal memory to the display
-            delay(100);
-            u8g2.clearBuffer();
             break;
         case SERIALDISPLAY:
             Serial.begin(9600);
             Serial.println("Pockonsole by Harry Pray IV");
             Serial.print("Version 2.0 Beta");
+            
             break;
     }
 }
