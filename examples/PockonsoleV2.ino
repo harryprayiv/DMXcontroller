@@ -2,7 +2,7 @@
  Harry Pockonsole V2
  **********************************************************************
  Board: VoV1366v0.8
- Design by Steve French @ Volt-Vision
+ Designed by Volt-Vision
  
  Code:
  ______________________________
@@ -42,10 +42,13 @@
 
 #include <Arduino.h> /*Arduino Includes*/
 #include <TeensyDmx.h> /*Arduino Includes*/
-#include <Keypad.h> /*Keypad Includes*/
-#include <EasingLibrary.h> /*Ease Includes*/
 #include <U8g2lib.h> /*U8G2 Includes*/
 #include <U8x8lib.h> /*U8G2 Includes*/
+#include <Keypad.h> /*Keypad Includes*/
+#include <EasingLibrary.h>
+
+
+
 
 #ifdef U8X8_HAVE_HW_SPI
 #include <SPI.h>
@@ -87,6 +90,18 @@ enum transMode {
     SINE_EASE
 };
 transMode transType = QUADRATIC_EASE;
+
+BackEase back;
+BounceEase bounce;
+CircularEase circular;
+CubicEase cubic;
+ElasticEase elastic;
+ExponentialEase exponential;
+LinearEase linear;
+QuadraticEase quadratic;
+QuarticEase quartic;
+QuinticEase quintic;
+SineEase sine;
 
 // _________________________________SELECTION MODES__________________________
 enum selectionMode {
@@ -195,7 +210,6 @@ void loop() {
             case KPDFADER_MODE:
                 if (key != NO_KEY) {
                     kpdToCommand(key);
-
                 }
                 break;
         }
@@ -227,11 +241,11 @@ void kpdToCommand(char key) {
     switch (key) {
             //___________________________________________________________________________________________________
         case '@':                       //  fall through switch for the '@' key with function trigger
-        case 'T':                       //  fall through switch for the '-' key with function trigger
-        case '&':                       //  fall through switch for the 'E' key with function trigger
-        case '-':                       //  fall through switch for the 'S' key with function trigger
-        case 'E':                       //  fall through switch for the '-' key with function trigger
-        case 'S':                       //  mapping for '&' key with function trigger
+        case 'T':                       //  fall through switch for the 'T' (through) key with function trigger
+        case '&':                       //  fall through switch for the '&' key with function trigger
+        case '-':                       //  fall through switch for the '-' key with function trigger
+        case 'E':                       //  fall through switch for the 'E' key with function trigger
+        case 'S':                       //  mapping for 'S' key with function trigger
             keypadLogic(false, key);
             break;
         case '0':                       //  fall through switch for the '0' key with function trigger
@@ -259,8 +273,9 @@ void keypadLogic(bool isAnInteger, char kpdInput) {
             if ((isAnInteger == false) && (pgmModeSelectionInt > 0)) {
                 if (kpdInput == 'E') {
                     if (pgmModeSelectionInt == 1){
-                        smpleDisplay("Fader Mode",true,true);
+                        smpleDisplay("Fader Mode",true, true);
                         controlMode = FADER_MODE;
+                        kpdState = NO_CMD;
                         modeChosen = true;
                         break;
                     }if (pgmModeSelectionInt == 2){
@@ -324,13 +339,13 @@ void keypadLogic(bool isAnInteger, char kpdInput) {
             if (isAnInteger == false) {                                     // is this an integer?
                 /*___________AT__________________________*/
                 if ((kpdInput == '@') && (intCount > 0)) { // if it is '@' and there are more than 0 integers
-                    smpleDisplay(" @ ",true,true);
+                    smpleDisplay(" @ ", true, true);
                     channelOneInt = atoi (chOneKpdChar);  //parse array into an int
                     if (channelOneInt > 512) {                    //greater than 512?? (one universe)
                         channelOneInt = 512;                      // max out channel number to 512
                     }
                     selectionType = SINGLECHANNEL;          // classify the command as soon as it is known
-                    kpdState = DMX_INTENSITY;                  // move to the stage where you assign intensity
+                    kpdState = DMX_INTENSITY;                  // move to the stage where we assign intensity
                     intCount = 0;      //zero the int Count
                     break;
                 }
@@ -395,7 +410,7 @@ void keypadLogic(bool isAnInteger, char kpdInput) {
                     } if (selectionType == THROUGH) {           // if input = 'THROUGH'
                         smpleDisplay(" at ",true,true);
                         channelTwoInt = atoi (chTwoKpdChar);      //parse array to an int
-                        if (channelTwoInt > 512) {
+                        if (channelTwoInt > 512) {          // prevent values from going over the max
                             channelTwoInt = 512;
                         }
                         kpdState = DMX_INTENSITY;                  // move to the stage where you assign intensity
@@ -429,7 +444,7 @@ void keypadLogic(bool isAnInteger, char kpdInput) {
                         if (selectionType == SINGLECHANNEL) {
                             intCount = 0;
                             kpdIntensityFloat = atof (intensityString);
-                            dmxDisplay(channelOneInt, SINGLECHANNEL, channelTwoInt, intensityString);
+                            dmxDisplay(channelOneInt, SINGLECHANNEL, channelTwoInt, intensityString, true, true);
                             kpdSubIntensity(channelOneInt, SINGLECHANNEL, 0, kpdIntensityFloat);
                             kpdState = NO_CMD;
                             selectionType = NONE; channelOneInt = 0; channelTwoInt = 0; intensityString[0] = '0';
@@ -437,39 +452,39 @@ void keypadLogic(bool isAnInteger, char kpdInput) {
                         }if (selectionType == AND) {
                             intCount = 0;
                             kpdIntensityFloat = atof (intensityString);
-                            dmxDisplay(channelOneInt, AND, channelTwoInt, intensityString);
+                            dmxDisplay(channelOneInt, AND, channelTwoInt, intensityString, true, true);
                             kpdSubIntensity(channelOneInt, AND, channelTwoInt, kpdIntensityFloat);
                             kpdState = NO_CMD;
                             break;
                         }if (selectionType == THROUGH) {
                             intCount = 0;
                             kpdIntensityFloat = atof (intensityString);
-                            dmxDisplay(channelOneInt, THROUGH, channelTwoInt, intensityString);
+                            dmxDisplay(channelOneInt, THROUGH, channelTwoInt, intensityString, true, true);
                             kpdSubIntensity(channelOneInt, THROUGH, channelTwoInt, kpdIntensityFloat);
                             kpdState = NO_CMD;
                             break;
                         }
                     }if (controlMode== KPDFADER_MODE) {       // if it is in KPDFADER_MODE control mode
                         if (selectionType == SINGLECHANNEL) {
-                            intCount = 0;
                             int i = atoi (intensityString);
-                            dmxDisplay(channelOneInt, SINGLECHANNEL, 0, (analogFaderMap[i - 1]));
+                            dmxDisplay(channelOneInt, SINGLECHANNEL, 0, (analogFaderMap[i - 1]), true, true);
                             kpdfaderSubIntensity(channelOneInt, SINGLECHANNEL, 0, (analogFaderMap[i - 1]));
                             kpdState = NO_CMD;
+                            intCount = 0;
                             break;
                         }if (selectionType == AND) {
-                            intCount = 0;
                             int i = atoi (intensityString);
-                            dmxDisplay(channelOneInt, AND, channelTwoInt, (analogFaderMap[i - 1]));
+                            dmxDisplay(channelOneInt, AND, channelTwoInt, (analogFaderMap[i - 1]), true, true);
                             kpdfaderSubIntensity(channelOneInt, AND, channelTwoInt, (analogFaderMap[i - 1]));
                             kpdState = NO_CMD;                  // move to the stage where you assign intensity
+                            intCount = 0;
                             break;
                         }if (selectionType == THROUGH) {
-                            intCount = 0;
                             int i = atoi (intensityString);
-                            dmxDisplay(channelOneInt, THROUGH, channelTwoInt, (analogFaderMap[i - 1]));
+                            dmxDisplay(channelOneInt, THROUGH, channelTwoInt, (analogFaderMap[i - 1]), true, true);
                             kpdfaderSubIntensity(channelOneInt, THROUGH, channelTwoInt, (analogFaderMap[i - 1]));
                             kpdState = NO_CMD;                  // move to the stage where you assign intensity
+                            intCount = 0;
                             break;
                         }
                     }
@@ -666,11 +681,13 @@ void smpleDisplay(String charinput, bool clear, bool send) {
 
 
 // a more complex display to allow for entire commands to be previewed
-void dmxDisplay(int chOne, selectionMode selType, int chTwo, String intensity) {
+void dmxDisplay(int chOne, selectionMode selType, int chTwo, String intensity, bool clear, bool send) {
     switch (display) {
             //POCKONSOLED______________________________________
         case POCKONSOLED:
-            u8g2.clearBuffer();
+            if (clear == true){
+              u8g2.clearBuffer();
+            }
             u8g2.setFont(u8g2_font_5x8_mn);  // choose a suitable font
             u8g2.setCursor(5, 10);
             u8g2.print(chOne);
@@ -733,7 +750,9 @@ void dmxDisplay(int chOne, selectionMode selType, int chTwo, String intensity) {
                 u8g2.print(" ");
                 u8g2.setFont(u8g2_font_5x8_mn);
                 u8g2.print(intensity);
-                u8g2.sendBuffer();   // transfer internal memory to the display
+                if (send == true){
+                u8g2.sendBuffer();   // transfer internal memory to the display;
+                }
                 break;
             }
             //SERIALDISPLAY______________________________________
@@ -766,105 +785,134 @@ void dmxDisplay(int chOne, selectionMode selType, int chTwo, String intensity) {
     }
 }
 
-// function for playing animations of values
-void animateDMXValues(int chOne, selectionMode selType, int chTwo, String transStartIntensity, String transEndIntensity, transMode transType, bool dirDecrIncr, int transTime) {
-    switch (transType) {
-            //BACK_EASE______________________________________
-        case BACK_EASE:
-            
-            break;
-            //BOUNCE_EASE______________________________________
-        case BOUNCE_EASE:
-            
-            break;
-            
-            //CIRCULAR_EASE______________________________________
-        case CIRCULAR_EASE:
-            
-            break;
-            
-            //CUBIC_EASE______________________________________
-        case CUBIC_EASE:
-            
-            break;
-            //ELASTIC_EASE______________________________________
-        case ELASTIC_EASE:
-            
-            break;
-            //EXPONENTIAL_EASE______________________________________
-        case EXPONENTIAL_EASE:
-            
-            break;
-            //LINEAR_EASE______________________________________
-        case LINEAR_EASE:
-            
-            break;
-            //QUADRATIC_EASE______________________________________
-        case QUADRATIC_EASE:
-            
-            break;
-            //QUARTIC_EASE______________________________________
-        case QUARTIC_EASE:
-            
-            break;
-            //QUINTIC_EASE______________________________________
-        case QUINTIC_EASE:
-            
-            break;
-            //SINE_EASE______________________________________
-        case SINE_EASE:
-            
-            break;
-    }
-}
 
-void animateInOutDMXValues(int chOne, selectionMode selType, int chTwo, String transStartIntensity, String transEndIntensity, transMode transType, int transTime) {
+void animateDMXValues(int chOne, selectionMode selType, int chTwo, float transStartIntensity, float transEndIntensity, transMode transType, int duration) {
+    double currentTime = 0; 
+    double change = (transEndIntensity - transStartIntensity);
+    double subdivisions = (change/duration);
+    double easedPosition;
+      
     switch (transType) {
-            //BACK_EASE______________________________________
+        //BACK_EASE______________________________________
         case BACK_EASE:
-            
+          back.setDuration(duration);
+          back.setTotalChangeInPosition(change);
+          for(int i=0;i<=duration;i++) {   
+            easedPosition=back.easeIn(currentTime);
+            smpleDisplay(easedPosition, true, true);
+            currentTime+=subdivisions;
+            delay(5);
+          }            
             break;
-            //BOUNCE_EASE______________________________________
+        //BOUNCE_EASE______________________________________
         case BOUNCE_EASE:
-            
-            break;
-            
-            //CIRCULAR_EASE______________________________________
+          bounce.setDuration(duration);
+          bounce.setTotalChangeInPosition(change);
+          for(int i=0;i<=duration;i++) {   
+            easedPosition=bounce.easeIn(currentTime);
+            smpleDisplay(easedPosition, true, true);
+            currentTime+=subdivisions;
+            delay(5);
+          }            
+            break;       
+         //CIRCULAR_EASE______________________________________
         case CIRCULAR_EASE:
-            
-            break;
-            
-            //CUBIC_EASE______________________________________
+          circular.setDuration(duration);
+          circular.setTotalChangeInPosition(change);
+          for(int i=0;i<=duration;i++) {   
+            easedPosition=circular.easeIn(currentTime);
+            smpleDisplay(easedPosition, true, true);
+            currentTime+=subdivisions;
+            delay(5);
+          }            
+            break;  
+         //CUBIC_EASE______________________________________
         case CUBIC_EASE:
-            
+          cubic.setDuration(duration);
+          cubic.setTotalChangeInPosition(change);
+          for(int i=0;i<=duration;i++) {   
+            easedPosition=cubic.easeIn(currentTime);
+            smpleDisplay(easedPosition, true, true);
+            currentTime+=subdivisions;
+            delay(5);
+          }            
             break;
             //ELASTIC_EASE______________________________________
         case ELASTIC_EASE:
-            
+          elastic.setDuration(duration);
+          elastic.setTotalChangeInPosition(change);
+          for(int i=0;i<=duration;i++) {   
+            easedPosition=elastic.easeIn(currentTime);
+            smpleDisplay(easedPosition, true, true);
+            currentTime+=subdivisions;
+            delay(5);
+          }            
             break;
             //EXPONENTIAL_EASE______________________________________
         case EXPONENTIAL_EASE:
-            
+          exponential.setDuration(duration);
+          exponential.setTotalChangeInPosition(change);
+          for(int i=0;i<=duration;i++) {   
+            easedPosition=exponential.easeIn(currentTime);
+            smpleDisplay(easedPosition, true, true);
+            currentTime+=subdivisions;
+            delay(5);
+          }            
             break;
             //LINEAR_EASE______________________________________
         case LINEAR_EASE:
-            
+          linear.setDuration(duration);
+          linear.setTotalChangeInPosition(change);
+          for(int i=0;i<=duration;i++) {   
+            easedPosition=linear.easeIn(currentTime);
+            smpleDisplay(easedPosition, true, true);
+            currentTime+=subdivisions;
+            delay(5);
+          }            
             break;
             //QUADRATIC_EASE______________________________________
         case QUADRATIC_EASE:
-            
+          quadratic.setDuration(duration);
+          quadratic.setTotalChangeInPosition(change);
+          for(int i=0;i<=duration;i++) {   
+            easedPosition=quadratic.easeIn(currentTime);
+            smpleDisplay(easedPosition, true, true);
+            currentTime+=subdivisions;
+            delay(5);
+          }            
             break;
             //QUARTIC_EASE______________________________________
         case QUARTIC_EASE:
-            
+          quartic.setDuration(duration);
+          quartic.setTotalChangeInPosition(change);
+          for(int i=0;i<=duration;i++) {   
+            easedPosition=quartic.easeIn(currentTime);
+            smpleDisplay(easedPosition, true, true);
+            currentTime+=subdivisions;
+            delay(5);
+          }
             break;
             //QUINTIC_EASE______________________________________
         case QUINTIC_EASE:
-            
+          quintic.setDuration(duration);
+          quintic.setTotalChangeInPosition(change);
+          for(int i=0;i<=duration;i++) {   
+            easedPosition=quintic.easeIn(currentTime);
+            smpleDisplay(easedPosition, true, true);
+            currentTime+=subdivisions;
+            delay(5);
+          }
             break;
             //SINE_EASE______________________________________
         case SINE_EASE:
-            
+          sine.setDuration(duration);
+          sine.setTotalChangeInPosition(change);
+          for(int i=0;i<=duration;i++) {   
+            easedPosition=sine.easeIn(currentTime);
+            smpleDisplay(easedPosition, true, true);
+            currentTime+=subdivisions;
+            delay(5);
+          }            
             break;
     }
 }
@@ -1033,7 +1081,6 @@ void introPage(displayMode dispmode){
             Serial.begin(9600);
             Serial.println("Pockonsole by Harry Pray IV");
             Serial.print("Version 2.0 Beta");
-            
             break;
     }
 }
@@ -1048,6 +1095,5 @@ void intWrap(String numToWrap, char inputNum, int spaces){
     for (int i = 0; (i < spaces); i++){
         numToWrap[i] = numToWrap[i+1]; //shifting values to next array position  
     }
-    numToWrap[spaces] = inputNum;   // adding the char to the array 
-    
+    numToWrap[spaces] = inputNum;   // adding the char to the array   
 }
