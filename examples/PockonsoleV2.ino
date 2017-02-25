@@ -76,6 +76,7 @@ int channelMap[512] = {0};                    //The beginning of being able to m
 float scalerVal;
 
 // _________________________________ANIMATION MODES__________________________
+
 enum transMode {
     BACK_EASE,
     BOUNCE_EASE,
@@ -89,8 +90,10 @@ enum transMode {
     QUINTIC_EASE,
     SINE_EASE
 };
-transMode transType = QUADRATIC_EASE;
 
+transMode transType = QUADRATIC_EASE;        // default curve is Quadratic 
+
+// creating instances of variables
 BackEase back;
 BounceEase bounce;
 CircularEase circular;
@@ -102,6 +105,14 @@ QuadraticEase quadratic;
 QuarticEase quartic;
 QuinticEase quintic;
 SineEase sine;
+
+enum transubMode {          // controls which part of the transition has a curve applied to it
+    IN, 
+    OUT,
+    IN_OUT,
+};
+
+transubMode transPart = IN_OUT;  // intializing with both in and out with a curve on them.
 
 // _________________________________SELECTION MODES__________________________
 enum selectionMode {
@@ -185,35 +196,47 @@ void setup() {
 }
 
 void loop() {
-   char key = keypad.getKey();
-   if (modeChosen == false){
-
-        if (key != NO_KEY) {
-            kpdToCommand(key);
-            
-        }
-    }else {
-    switch (controlMode) {
-           case FADER_MODE:
-               u8g2.clearBuffer();
-               fadersToDmxWscaler(16,9);
-               
-               
-               break;
-               
-           case KPD_MODE:
-               if (key != NO_KEY) {
-                  kpdToCommand(key);
-                }
-                break;
-            
-            case KPDFADER_MODE:
-                if (key != NO_KEY) {
-                    kpdToCommand(key);
-                }
-                break;
-        }
-    }
+//  animateDMXValues(1, THROUGH, 512, 0, 100, 100, BACK_EASE, IN_OUT);
+//  animateDMXValues(1, THROUGH, 512, 0, 100, 100, BOUNCE_EASE, IN_OUT);
+//  animateDMXValues(1, THROUGH, 512, 0, 100, 100, CIRCULAR_EASE, IN_OUT);
+  animateDMXValues(1, THROUGH, 512, 0, 100, 100, CUBIC_EASE, IN_OUT);
+//  animateDMXValues(1, THROUGH, 512, 0, 100, 100, ELASTIC_EASE, IN_OUT);
+  animateDMXValues(1, THROUGH, 512, 0, 100, 100, EXPONENTIAL_EASE, IN_OUT);
+  animateDMXValues(1, THROUGH, 512, 0, 100, 100, LINEAR_EASE, IN_OUT);
+  animateDMXValues(1, THROUGH, 512, 0, 100, 100, QUADRATIC_EASE, IN_OUT);
+  animateDMXValues(1, THROUGH, 512, 0, 100, 100, QUARTIC_EASE, IN_OUT);
+  animateDMXValues(1, THROUGH, 512, 0, 100, 100, QUINTIC_EASE, IN_OUT);
+  animateDMXValues(1, THROUGH, 512, 0, 100, 100, SINE_EASE, IN_OUT);
+    
+//   char key = keypad.getKey();
+//   if (modeChosen == false){
+//
+//        if (key != NO_KEY) {
+//            kpdToCommand(key);
+//            
+//        }
+//    }else {
+//    switch (controlMode) {
+//           case FADER_MODE:
+//               u8g2.clearBuffer();
+//               fadersToDmxWscaler(16,9);
+//               
+//               
+//               break;
+//               
+//           case KPD_MODE:
+//               if (key != NO_KEY) {
+//                  kpdToCommand(key);
+//                }
+//                break;
+//            
+//            case KPDFADER_MODE:
+//                if (key != NO_KEY) {
+//                    kpdToCommand(key);
+//                }
+//                break;
+//        }
+//    }
 }
 
 
@@ -516,54 +539,10 @@ void keypadLogic(bool isAnInteger, char kpdInput) {
     }
 }
 
-/*wrap is still not working.
- *
- * someone recommended this
- *
- *
- 
- void shiftright (int myarray[], int size);
- 
- int main (void)
- {
- int myarray []= {1, 3, 5, 7, 9};
- 
- shiftright( myarray, 5);
- 
- for ( int i=0; i<5; i++)
- {
- cout << myarray[i] << ' ';
- }
- 
- return(0);
- 
- }
- 
- void shiftright (int myarray[], int size)
- {
- 
- int temp;
- int temp1;
- 
- for (int i=0; i<(size -1); i++)
- {
- temp =  myarray[size-1];
- myarray[size-1] = myarray[i];
- myarray[i] = temp;
- }
- 
- 
- }
- 
- */
-
-
 
 // to call this function: faderSubIntensity(1, 27, THROUGH, 1) would get you a submaster of channels 1 through 27 on fader 1
 // to call this function: faderSubIntensity(1, 27, AND, 1) would get you a submaster of channels 1 and 27 on fader 1
 // to call this function: faderSubIntensity(1, 0, SINGLECHANNEL, 1) would get you a submaster of channel 1 on fader 1
-
-
 void kpdfaderSubIntensity(int chOne, selectionMode selType, int chTwo, int sMfader) {
     switch (selType) {
             /*_______PARSING 'SINGLECHANNEL'__________*/
@@ -617,7 +596,6 @@ void kpdfaderSubIntensity(int chOne, selectionMode selType, int chTwo, int sMfad
 // to call this function: kpdSubIntensity(1, SINGLECHANNEL, 0, 100.00) would get you channel 1 @ 100% of 255
 // to call this function: kpdSubIntensity(1, AND, 37, 66.666666) would get you channel 1 AND 37 @ 66% of 255
 // to call this function: kpdSubIntensity(1, THROUGH, 37, 75.000) would get you channel 1 THROUGH 37 @ 75% of 255
-
 void kpdSubIntensity(int chOne, selectionMode selType, int chTwo, float intensity) {
     switch (selType) {
             /*_______PARSING 'SINGLECHANNEL'__________*/
@@ -674,6 +652,48 @@ void smpleDisplay(String charinput, bool clear, bool send) {
             //SERIALDISPLAY______________________________________
         case SERIALDISPLAY:
             Serial.println(charinput);
+            break;
+    }
+}
+
+//a simple display for keys being entered that allows me to prevent U8G2 from sending and clearing the buffer without affecting the serial functions.
+void smpleDisplayWCursor(String charinput, int x, int y, bool clear, bool send) {
+    switch (display) {
+            //POCKONSOLED______________________________________
+        case POCKONSOLED:
+            if (clear == true){
+              u8g2.clearBuffer();   // clear internal memory on the display
+            }
+            u8g2.setFont(u8g2_font_profont15_tf);  // choose a suitable font
+            u8g2.setCursor(x, y);
+            u8g2.print(charinput);
+            if (send == true){
+              u8g2.sendBuffer();   // transfer internal memory to the display
+            }
+            break;
+            //SERIALDISPLAY______________________________________
+        case SERIALDISPLAY:
+            Serial.println(charinput);
+            break;
+    }
+}
+
+//a simple display for keys being entered that allows me to prevent U8G2 from sending and clearing the buffer without affecting the serial functions.
+void smpleSquareAnimation(int x, int y, bool clear, bool send) {
+    switch (display) {
+            //POCKONSOLED______________________________________
+        case POCKONSOLED:
+            if (clear == true){
+              u8g2.clearBuffer();   // clear internal memory on the display
+            }
+            u8g2.drawBox(3,7,x,15);
+            if (send == true){
+              u8g2.sendBuffer();   // transfer internal memory to the display
+            }
+            break;
+            //SERIALDISPLAY______________________________________
+        case SERIALDISPLAY:
+            Serial.println("a fucking square, dude");
             break;
     }
 }
@@ -786,135 +806,199 @@ void dmxDisplay(int chOne, selectionMode selType, int chTwo, String intensity, b
 }
 
 
-void animateDMXValues(int chOne, selectionMode selType, int chTwo, float transStartIntensity, float transEndIntensity, transMode transType, int duration) {
+void animateDMXValues(int chOne, selectionMode selType, int chTwo, float transStartIntensity, float transEndIntensity, int duration, transMode transType, transubMode transPart) {
     double currentTime = 0; 
     double change = (transEndIntensity - transStartIntensity);
-    double subdivisions = (change/duration);
+    double subdivisions = round((change/duration));
     double easedPosition;
       
     switch (transType) {
         //BACK_EASE______________________________________
         case BACK_EASE:
+          change = (change/2);
           back.setDuration(duration);
           back.setTotalChangeInPosition(change);
           for(int i=0;i<=duration;i++) {   
             easedPosition=back.easeIn(currentTime);
-            smpleDisplay(easedPosition, true, true);
+            smpleDisplayWCursor("Back", 10, 55, true, false);
+            smpleSquareAnimation(easedPosition, 25, false, false);
+            smpleDisplayWCursor(easedPosition, 10, 18, false, true);
+
+
             currentTime+=subdivisions;
             delay(5);
-          }            
-            break;
+          }
+          smpleDisplayWCursor("Back", 10, 55, true, false);    
+          smpleSquareAnimation(transEndIntensity, 25, false, true);
+          delay(1000);        
+          break;        
         //BOUNCE_EASE______________________________________
         case BOUNCE_EASE:
+          change = (change/2);
           bounce.setDuration(duration);
           bounce.setTotalChangeInPosition(change);
           for(int i=0;i<=duration;i++) {   
             easedPosition=bounce.easeIn(currentTime);
-            smpleDisplay(easedPosition, true, true);
+            smpleDisplayWCursor("Bounce", 10, 55, true, false);
+            smpleSquareAnimation(easedPosition, 25, false, false);
+            smpleDisplayWCursor(easedPosition, 10, 18, false, true);
+
             currentTime+=subdivisions;
             delay(5);
-          }            
-            break;       
-         //CIRCULAR_EASE______________________________________
+          }
+          smpleDisplayWCursor("Bounce", 10, 55, true, false);    
+          smpleSquareAnimation(transEndIntensity, 25, false, true);
+          delay(1000);        
+          break;         //CIRCULAR_EASE______________________________________
         case CIRCULAR_EASE:
           circular.setDuration(duration);
           circular.setTotalChangeInPosition(change);
           for(int i=0;i<=duration;i++) {   
-            easedPosition=circular.easeIn(currentTime);
-            smpleDisplay(easedPosition, true, true);
+            easedPosition=circular.easeInOut(currentTime);
+            smpleDisplayWCursor("Circular", 10, 55, true, false);
+            smpleSquareAnimation(easedPosition, 25, false, false);
+            smpleDisplayWCursor(easedPosition, 10, 18, false, true);
+
             currentTime+=subdivisions;
             delay(5);
-          }            
-            break;  
-         //CUBIC_EASE______________________________________
+          }
+          smpleDisplayWCursor("Circular", 10, 55, true, false);    
+          smpleSquareAnimation(transEndIntensity, 25, false, true);
+          delay(1000);        
+          break;         //CUBIC_EASE______________________________________
         case CUBIC_EASE:
           cubic.setDuration(duration);
           cubic.setTotalChangeInPosition(change);
           for(int i=0;i<=duration;i++) {   
-            easedPosition=cubic.easeIn(currentTime);
-            smpleDisplay(easedPosition, true, true);
+            easedPosition=cubic.easeInOut(currentTime);
+            smpleDisplayWCursor("Cubic", 10, 55, true, false);
+            smpleSquareAnimation(easedPosition, 25, false, false);
+            smpleDisplayWCursor(easedPosition, 10, 18, false, true);
+
             currentTime+=subdivisions;
             delay(5);
-          }            
-            break;
-            //ELASTIC_EASE______________________________________
+          }
+          smpleDisplayWCursor("Cubic", 10, 55, true, false);    
+          smpleSquareAnimation(transEndIntensity, 25, false, true);
+          delay(1000);        
+          break;            //ELASTIC_EASE______________________________________
         case ELASTIC_EASE:
+          change = (change/2);
           elastic.setDuration(duration);
           elastic.setTotalChangeInPosition(change);
           for(int i=0;i<=duration;i++) {   
-            easedPosition=elastic.easeIn(currentTime);
-            smpleDisplay(easedPosition, true, true);
+            easedPosition=elastic.easeInOut(currentTime);
+            smpleDisplayWCursor("Elastic", 10, 55, true, false);
+            smpleSquareAnimation(easedPosition, 25, false, false);
+            smpleDisplayWCursor(easedPosition, 10, 18, false, true);
+
             currentTime+=subdivisions;
             delay(5);
-          }            
-            break;
-            //EXPONENTIAL_EASE______________________________________
+          }
+          smpleDisplayWCursor("Elastic", 10, 55, true, false);    
+          smpleSquareAnimation(transEndIntensity, 25, false, true);
+          delay(1000);        
+          break;            //EXPONENTIAL_EASE______________________________________
         case EXPONENTIAL_EASE:
           exponential.setDuration(duration);
           exponential.setTotalChangeInPosition(change);
           for(int i=0;i<=duration;i++) {   
-            easedPosition=exponential.easeIn(currentTime);
-            smpleDisplay(easedPosition, true, true);
+            easedPosition=exponential.easeInOut(currentTime);
+            smpleDisplayWCursor("Exponential", 10, 55, true, false);
+            smpleSquareAnimation(easedPosition, 25, false, false);
+            smpleDisplayWCursor(easedPosition, 10, 18, false, true);
+
             currentTime+=subdivisions;
             delay(5);
-          }            
-            break;
-            //LINEAR_EASE______________________________________
+          }
+          smpleDisplayWCursor("Exponential", 10, 55, true, false);    
+          smpleSquareAnimation(transEndIntensity, 25, false, true);
+          delay(1000);        
+          break;            //LINEAR_EASE______________________________________
         case LINEAR_EASE:
           linear.setDuration(duration);
           linear.setTotalChangeInPosition(change);
           for(int i=0;i<=duration;i++) {   
-            easedPosition=linear.easeIn(currentTime);
-            smpleDisplay(easedPosition, true, true);
+            easedPosition=linear.easeInOut(currentTime);
+            smpleDisplayWCursor("Linear", 10, 55, true, false);
+            smpleSquareAnimation(easedPosition, 25, false, false);
+            smpleDisplayWCursor(easedPosition, 10, 18, false, true);
+
             currentTime+=subdivisions;
             delay(5);
-          }            
-            break;
-            //QUADRATIC_EASE______________________________________
+          }
+          smpleDisplayWCursor("Linear", 10, 55, true, false);    
+          smpleSquareAnimation(transEndIntensity, 25, false, true);
+          delay(1000);        
+          break;            //QUADRATIC_EASE______________________________________
         case QUADRATIC_EASE:
           quadratic.setDuration(duration);
           quadratic.setTotalChangeInPosition(change);
           for(int i=0;i<=duration;i++) {   
-            easedPosition=quadratic.easeIn(currentTime);
-            smpleDisplay(easedPosition, true, true);
+            easedPosition=quadratic.easeInOut(currentTime);
+            smpleDisplayWCursor("Quadratic", 10, 55, true, false);
+            smpleSquareAnimation(easedPosition, 25, false, false);
+            smpleDisplayWCursor(easedPosition, 10, 18, false, true);
+
             currentTime+=subdivisions;
             delay(5);
-          }            
-            break;
-            //QUARTIC_EASE______________________________________
+          }
+          smpleDisplayWCursor("Quadratic", 10, 55, true, false);    
+          smpleSquareAnimation(transEndIntensity, 25, false, true);
+          delay(1000);        
+          break;
+        //QUARTIC_EASE______________________________________
         case QUARTIC_EASE:
           quartic.setDuration(duration);
           quartic.setTotalChangeInPosition(change);
           for(int i=0;i<=duration;i++) {   
-            easedPosition=quartic.easeIn(currentTime);
-            smpleDisplay(easedPosition, true, true);
+            easedPosition=quartic.easeInOut(currentTime);
+            smpleDisplayWCursor("Quartic", 10, 55, true, false);
+            smpleSquareAnimation(easedPosition, 25, false, false);
+            smpleDisplayWCursor(easedPosition, 10, 18, false, true);
+
             currentTime+=subdivisions;
             delay(5);
           }
-            break;
-            //QUINTIC_EASE______________________________________
+          smpleDisplayWCursor("Quartic", 10, 55, true, false);    
+          smpleSquareAnimation(transEndIntensity, 25, false, true);
+          delay(1000);        
+          break;            
+        //QUINTIC_EASE______________________________________
         case QUINTIC_EASE:
           quintic.setDuration(duration);
           quintic.setTotalChangeInPosition(change);
           for(int i=0;i<=duration;i++) {   
-            easedPosition=quintic.easeIn(currentTime);
-            smpleDisplay(easedPosition, true, true);
+            easedPosition=quintic.easeInOut(currentTime);
+            smpleDisplayWCursor("Quintic", 10, 55, true, false);
+            smpleSquareAnimation(easedPosition, 25, false, false);
+            smpleDisplayWCursor(easedPosition, 10, 18, false, true);
+
             currentTime+=subdivisions;
             delay(5);
           }
-            break;
-            //SINE_EASE______________________________________
-        case SINE_EASE:
+          smpleDisplayWCursor("Quintic", 10, 55, true, false);    
+          smpleSquareAnimation(transEndIntensity, 25, false, true);
+          delay(1000);        
+          break;            
+        //SINE_EASE______________________________________
+        case SINE_EASE:          
           sine.setDuration(duration);
           sine.setTotalChangeInPosition(change);
           for(int i=0;i<=duration;i++) {   
-            easedPosition=sine.easeIn(currentTime);
-            smpleDisplay(easedPosition, true, true);
+            easedPosition=sine.easeInOut(currentTime);
+            smpleDisplayWCursor("Sine", 10, 55, true, false);
+            smpleSquareAnimation(easedPosition, 25, false, false);
+            smpleDisplayWCursor(easedPosition, 10, 18, false, true);
+
             currentTime+=subdivisions;
             delay(5);
-          }            
-            break;
-    }
+          }
+          smpleDisplayWCursor("Sine", 10, 55, true, false);    
+          smpleSquareAnimation(transEndIntensity, 25, false, true);
+          delay(1000);        
+          break;                
+          }
 }
 
 
@@ -1092,8 +1176,8 @@ float floatmap(float x, float in_min, float in_max, float out_min, float out_max
 }
 
 void intWrap(String numToWrap, char inputNum, int spaces){
-    for (int i = 0; (i < spaces); i++){
-        numToWrap[i] = numToWrap[i+1]; //shifting values to next array position  
+    for (int i = 0; (i = spaces); i++){
+        numToWrap[i] = numToWrap[(i+1)];              //shifting values to next array position until we get to the alotted spaces  
     }
     numToWrap[spaces] = inputNum;   // adding the char to the array   
 }
