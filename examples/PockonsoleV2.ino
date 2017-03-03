@@ -196,17 +196,21 @@ void setup() {
 }
 
 void loop() {
-  //  animateDMXValues(1, THROUGH, 512, 0, 100, 100, BACK_EASE, IN_OUT);
-  //  animateDMXValues(1, THROUGH, 512, 0, 100, 100, BOUNCE_EASE, IN_OUT);
-  //  animateDMXValues(1, THROUGH, 512, 0, 100, 100, CIRCULAR_EASE, IN_OUT);
-  animateDMXValues(1, THROUGH, 512, 0, 100, 100, CUBIC_EASE, IN_OUT);
-  //  animateDMXValues(1, THROUGH, 512, 0, 100, 100, ELASTIC_EASE, IN_OUT);
-  animateDMXValues(1, THROUGH, 512, 0, 100, 100, EXPONENTIAL_EASE, IN_OUT);
-  animateDMXValues(1, THROUGH, 512, 0, 100, 100, LINEAR_EASE, IN_OUT);
-  animateDMXValues(1, THROUGH, 512, 0, 100, 100, QUADRATIC_EASE, IN_OUT);
-  animateDMXValues(1, THROUGH, 512, 0, 100, 100, QUARTIC_EASE, IN_OUT);
-  animateDMXValues(1, THROUGH, 512, 0, 100, 100, QUINTIC_EASE, IN_OUT);
-  animateDMXValues(1, THROUGH, 512, 0, 100, 100, SINE_EASE, IN_OUT);
+compareInterpolations(120);
+  
+//  drawInterpolation();
+
+  //  interpolateDMXVals(1, THROUGH, 512, 0, 125, 120, LINEAR_EASE, IN_OUT);
+  //  interpolateDMXVals(1, THROUGH, 512, 0, 125, 120, CUBIC_EASE, IN_OUT);
+  //  interpolateDMXVals(1, THROUGH, 512, 0, 125, 120, EXPONENTIAL_EASE, IN_OUT);
+  //  interpolateDMXVals(1, THROUGH, 512, 0, 125, 120, QUADRATIC_EASE, IN_OUT);
+  //  interpolateDMXVals(1, THROUGH, 512, 0, 125, 120, QUARTIC_EASE, IN_OUT);
+  //  interpolateDMXVals(1, THROUGH, 512, 0, 125, 120, QUINTIC_EASE, IN_OUT);
+  //  interpolateDMXVals(1, THROUGH, 512, 0, 125, 120, SINE_EASE, IN_OUT);
+  //  interpolateDMXVals(1, THROUGH, 512, 40, 80, 120, BACK_EASE, IN_OUT);
+  //  interpolateDMXVals(1, THROUGH, 512, 40, 80, 120, BOUNCE_EASE, IN_OUT);
+  //  interpolateDMXVals(1, THROUGH, 512, 40, 80, 120, CIRCULAR_EASE, IN_OUT);
+  //  interpolateDMXVals(1, THROUGH, 512, 40, 80, 120, ELASTIC_EASE, IN_OUT);
 
   //   char key = keypad.getKey();
   //   if (modeChosen == false){
@@ -285,9 +289,6 @@ void kpdToCommand(char key) {
       break;
   }
 }
-
-
-
 
 void keypadLogic(bool isAnInteger, char kpdInput) {
   switch (kpdState) {
@@ -698,7 +699,48 @@ void smpleSquareAnimation(int x, int y, bool clear, bool send) {
   }
 }
 
+//a simple display for faders to prevent U8G2 from sending and clearing the buffer without affecting the serial functions
+void vertSquareAnimate(int x, int y, int xOffset, bool clear, bool send) {
+  switch (display) {
+    //POCKONSOLED______________________________________
+    case POCKONSOLED:
+      if (clear == true) {
+        u8g2.clearBuffer();   // clear internal memory on the display
+      }
+      u8g2.drawBox(x, y, xOffset, 65);
+      if (send == true) {
+        u8g2.sendBuffer();   // transfer internal memory to the display
+      }
+      break;
+    //SERIALDISPLAY______________________________________
+    case SERIALDISPLAY:
+      Serial.println("a fucking square, dude");
+      break;
+  }  
+}
 
+
+//a simple display for faders to prevent U8G2 from sending and clearing the buffer without affecting the serial functions.
+void drawpixel(int x, int y, bool clear = false, bool send = false) {
+  switch (display) {
+    //POCKONSOLED______________________________________
+    case POCKONSOLED:
+      if (clear == true) {
+        u8g2.clearBuffer();   // clear internal memory on the display
+      }
+      u8g2.setDrawColor(1);
+      u8g2.drawPixel(x, y);
+      u8g2.drawPixel(x, y + 1);
+      if (send == true) {
+        u8g2.sendBuffer();   // transfer internal memory to the display
+      }
+      break;
+    //SERIALDISPLAY______________________________________
+    case SERIALDISPLAY:
+      Serial.println("a fucking square, dude");
+      break;
+  }
+}
 
 // a more complex display to allow for entire commands to be previewed
 void dmxDisplay(int chOne, selectionMode selType, int chTwo, String intensity, bool clear, bool send) {
@@ -806,7 +848,7 @@ void dmxDisplay(int chOne, selectionMode selType, int chTwo, String intensity, b
 }
 
 
-void animateDMXValues(int chOne, selectionMode selType, int chTwo, float transStartIntensity, float transEndIntensity, int duration, transMode transType, transubMode transPart) {
+void interpolateDMXVals(int chOne, selectionMode selType, int chTwo, float transStartIntensity, float transEndIntensity, int duration, transMode transType, transubMode transPart) {
   double currentTime = 0;
   double change = (transEndIntensity - transStartIntensity);
   double subdivisions = round((change / duration));
@@ -815,7 +857,6 @@ void animateDMXValues(int chOne, selectionMode selType, int chTwo, float transSt
   switch (transType) {
     //BACK_EASE______________________________________
     case BACK_EASE:
-      change = (change / 2);
       back.setDuration(duration);
       back.setTotalChangeInPosition(change);
       for (int i = 0; i <= duration; i++) {
@@ -823,8 +864,6 @@ void animateDMXValues(int chOne, selectionMode selType, int chTwo, float transSt
         smpleDisplayWCursor("Back", 10, 55, true, false);
         smpleSquareAnimation(easedPosition, 25, false, false);
         smpleDisplayWCursor(easedPosition, 10, 18, false, true);
-
-
         currentTime += subdivisions;
         delay(5);
       }
@@ -834,7 +873,6 @@ void animateDMXValues(int chOne, selectionMode selType, int chTwo, float transSt
       break;
     //BOUNCE_EASE______________________________________
     case BOUNCE_EASE:
-      change = (change / 2);
       bounce.setDuration(duration);
       bounce.setTotalChangeInPosition(change);
       for (int i = 0; i <= duration; i++) {
@@ -842,7 +880,6 @@ void animateDMXValues(int chOne, selectionMode selType, int chTwo, float transSt
         smpleDisplayWCursor("Bounce", 10, 55, true, false);
         smpleSquareAnimation(easedPosition, 25, false, false);
         smpleDisplayWCursor(easedPosition, 10, 18, false, true);
-
         currentTime += subdivisions;
         delay(5);
       }
@@ -858,7 +895,6 @@ void animateDMXValues(int chOne, selectionMode selType, int chTwo, float transSt
         smpleDisplayWCursor("Circular", 10, 55, true, false);
         smpleSquareAnimation(easedPosition, 25, false, false);
         smpleDisplayWCursor(easedPosition, 10, 18, false, true);
-
         currentTime += subdivisions;
         delay(5);
       }
@@ -874,7 +910,6 @@ void animateDMXValues(int chOne, selectionMode selType, int chTwo, float transSt
         smpleDisplayWCursor("Cubic", 10, 55, true, false);
         smpleSquareAnimation(easedPosition, 25, false, false);
         smpleDisplayWCursor(easedPosition, 10, 18, false, true);
-
         currentTime += subdivisions;
         delay(5);
       }
@@ -883,7 +918,6 @@ void animateDMXValues(int chOne, selectionMode selType, int chTwo, float transSt
       delay(1000);
       break;            //ELASTIC_EASE______________________________________
     case ELASTIC_EASE:
-      change = (change / 2);
       elastic.setDuration(duration);
       elastic.setTotalChangeInPosition(change);
       for (int i = 0; i <= duration; i++) {
@@ -891,7 +925,6 @@ void animateDMXValues(int chOne, selectionMode selType, int chTwo, float transSt
         smpleDisplayWCursor("Elastic", 10, 55, true, false);
         smpleSquareAnimation(easedPosition, 25, false, false);
         smpleDisplayWCursor(easedPosition, 10, 18, false, true);
-
         currentTime += subdivisions;
         delay(5);
       }
@@ -907,7 +940,6 @@ void animateDMXValues(int chOne, selectionMode selType, int chTwo, float transSt
         smpleDisplayWCursor("Exponential", 10, 55, true, false);
         smpleSquareAnimation(easedPosition, 25, false, false);
         smpleDisplayWCursor(easedPosition, 10, 18, false, true);
-
         currentTime += subdivisions;
         delay(5);
       }
@@ -923,7 +955,6 @@ void animateDMXValues(int chOne, selectionMode selType, int chTwo, float transSt
         smpleDisplayWCursor("Linear", 10, 55, true, false);
         smpleSquareAnimation(easedPosition, 25, false, false);
         smpleDisplayWCursor(easedPosition, 10, 18, false, true);
-
         currentTime += subdivisions;
         delay(5);
       }
@@ -939,7 +970,6 @@ void animateDMXValues(int chOne, selectionMode selType, int chTwo, float transSt
         smpleDisplayWCursor("Quadratic", 10, 55, true, false);
         smpleSquareAnimation(easedPosition, 25, false, false);
         smpleDisplayWCursor(easedPosition, 10, 18, false, true);
-
         currentTime += subdivisions;
         delay(5);
       }
@@ -956,7 +986,6 @@ void animateDMXValues(int chOne, selectionMode selType, int chTwo, float transSt
         smpleDisplayWCursor("Quartic", 10, 55, true, false);
         smpleSquareAnimation(easedPosition, 25, false, false);
         smpleDisplayWCursor(easedPosition, 10, 18, false, true);
-
         currentTime += subdivisions;
         delay(5);
       }
@@ -973,7 +1002,6 @@ void animateDMXValues(int chOne, selectionMode selType, int chTwo, float transSt
         smpleDisplayWCursor("Quintic", 10, 55, true, false);
         smpleSquareAnimation(easedPosition, 25, false, false);
         smpleDisplayWCursor(easedPosition, 10, 18, false, true);
-
         currentTime += subdivisions;
         delay(5);
       }
@@ -990,7 +1018,6 @@ void animateDMXValues(int chOne, selectionMode selType, int chTwo, float transSt
         smpleDisplayWCursor("Sine", 10, 55, true, false);
         smpleSquareAnimation(easedPosition, 25, false, false);
         smpleDisplayWCursor(easedPosition, 10, 18, false, true);
-
         currentTime += subdivisions;
         delay(5);
       }
@@ -1001,6 +1028,242 @@ void animateDMXValues(int chOne, selectionMode selType, int chTwo, float transSt
   }
 }
 
+// CURRENTLY BROKEN***************************************************
+void drawInterpolation() {
+  double duration;
+  double currentTime;
+  double easedPosition = 62;
+  smpleDisplayWCursor("Linear", 1, 20, true, false);
+  linear.setDuration(duration);
+  linear.setTotalChangeInPosition(duration);
+  drawpixel(currentTime, 62, false, false);
+  for (int i = 0; i <= duration; i++) {
+    double currentTime = 0;
+    smpleDisplayWCursor("Linear", 1, 20, false, true);
+    easedPosition = linear.easeIn(currentTime);
+    drawpixel(currentTime, (62 - easedPosition), false, false);
+    currentTime ++;
+  }
+  smpleDisplayWCursor("Linear", 1, 20, false, true);
+  delay(6);
+  duration = 120;
+  currentTime = 0;
+  easedPosition = 62;
+  smpleDisplayWCursor("Quadratic", 1, 20, true, false);
+  quadratic.setDuration(duration);
+  quadratic.setTotalChangeInPosition(duration);
+  drawpixel(currentTime, 62, true, false);
+  for (int i = 0; i <= duration; i++) {
+    smpleDisplayWCursor("Quadratic", 1, 20, false, true);
+    easedPosition = quadratic.easeIn(currentTime);
+    drawpixel(currentTime, (120 - easedPosition), false, true);
+    currentTime ++;
+  }
+  smpleDisplayWCursor("Quadratic", 1, 20, false, true);
+  delay(60);
+
+  duration = 124;
+  currentTime = 62;
+  easedPosition = 62;
+  smpleDisplayWCursor("Cubic", 1, 20, true, false);
+  cubic.setDuration(duration);
+  cubic.setTotalChangeInPosition(duration);
+  drawpixel(currentTime, 62, true, false);
+  for (int i = 0; i <= duration; i++) {
+    smpleDisplayWCursor("Cubic", 1, 20, false, true);
+    easedPosition = cubic.easeIn(currentTime);
+    drawpixel(currentTime, (128 - easedPosition), false, false);
+    currentTime ++;
+  }
+  smpleDisplayWCursor("Cubic", 1, 20, false, true);
+  delay(60);
+
+  duration = 124;
+  currentTime = 62;
+  easedPosition = 62;
+  smpleDisplayWCursor("Quartic", 1, 20, true, false);
+  quartic.setDuration(duration);
+  quartic.setTotalChangeInPosition(duration);
+  drawpixel(currentTime, 62, true, false);
+  for (int i = 0; i <= duration; i++) {
+    smpleDisplayWCursor("Quartic", 1, 20, false, true);
+    easedPosition = quartic.easeIn(currentTime);
+    drawpixel(currentTime, (128 - easedPosition), false, true);
+    currentTime ++;
+    delay(2);
+  }
+  smpleDisplayWCursor("Quartic", 1, 20, false, true);
+  delay(60);
+
+  duration = 124;
+  currentTime = 62;
+  easedPosition = 62;
+  smpleDisplayWCursor("Sine", 1, 20, true, false);
+  sine.setDuration(duration);
+  sine.setTotalChangeInPosition(duration);
+  drawpixel(currentTime, 62, true, false);
+  for (int i = 0; i <= duration; i++) {
+    smpleDisplayWCursor("Sine", 1, 20, false, true);
+    easedPosition = sine.easeIn(currentTime);
+    drawpixel(currentTime, (128 - easedPosition), false, true);
+    currentTime ++;
+    delay(2);
+  }
+  smpleDisplayWCursor("Sine", 1, 20, false, true);
+  delay(60);
+
+  duration = 124;
+  currentTime = 62;
+  easedPosition = 62;
+  smpleDisplayWCursor("Quintic", 1, 20, true, false);
+  quintic.setDuration(duration);
+  quintic.setTotalChangeInPosition(duration);
+  drawpixel(currentTime, 62, true, false);
+  for (int i = 0; i <= duration; i++) {
+    smpleDisplayWCursor("Quintic", 1, 20, false, true);
+    easedPosition = quintic.easeIn(currentTime);
+    drawpixel(currentTime, (128 - easedPosition), false, true);
+    currentTime ++;
+    delay(2);
+  }
+  smpleDisplayWCursor("Quintic", 1, 20, false, true);
+  delay(60);
+
+  duration = 124;
+  currentTime = 62;
+  easedPosition = 62;
+  smpleDisplayWCursor("Exponential", 1, 20, true, false);
+  exponential.setDuration(duration);
+  exponential.setTotalChangeInPosition(duration);
+  drawpixel(currentTime, 62, true, false);
+  for (int i = 0; i <= duration; i++) {
+    smpleDisplayWCursor("Exponential", 1, 20, false, true);
+    easedPosition = exponential.easeIn(currentTime);
+    drawpixel(currentTime, (128 - easedPosition), false, true);
+    currentTime ++;
+    delay(2);
+  }
+  smpleDisplayWCursor("Exponential", 1, 20, false, true);
+  delay(60);
+
+  duration = 124;
+  currentTime = 62;
+  easedPosition = 52;
+  smpleDisplayWCursor("Back", 1, 20, true, false);
+  back.setDuration(duration);
+  back.setTotalChangeInPosition(duration);
+  drawpixel(currentTime, 52, true, false);
+  for (int i = 0; i <= duration; i++) {
+    smpleDisplayWCursor("Back", 1, 20, false, true);
+    easedPosition = back.easeIn(currentTime);
+    drawpixel(currentTime, (128 - easedPosition), false, true);
+    currentTime ++;
+    delay(2);
+  }
+  smpleDisplayWCursor("Back", 1, 20, false, true);
+  delay(60);
+
+  duration = 124;
+  currentTime = 62;
+  easedPosition = 62;
+  smpleDisplayWCursor("Bounce", 1, 20, true, false);
+  bounce.setDuration(duration);
+  bounce.setTotalChangeInPosition(duration);
+  drawpixel(currentTime, 62, true, false);
+  for (int i = 0; i <= duration; i++) {
+    smpleDisplayWCursor("Bounce", 1, 20, false, true);
+    easedPosition = bounce.easeIn(currentTime);
+    drawpixel(currentTime, (128 - easedPosition), false, true);
+    currentTime ++;
+    delay(2);
+  }
+  smpleDisplayWCursor("Bounce", 1, 20, false, true);
+  delay(60);
+
+  duration = 120;
+  currentTime = 62;
+  easedPosition = 52;
+  elastic.setDuration(duration);
+  elastic.setTotalChangeInPosition(duration);
+  smpleDisplayWCursor("Elastic", 1, 20, true, false);
+  drawpixel(currentTime, 42, true, false);
+  for (int i = 0; i <= duration; i++) {
+    smpleDisplayWCursor("Elastic", 1, 20, false, true);
+    easedPosition = elastic.easeIn(currentTime);
+    drawpixel(currentTime, (128 - easedPosition), false, true);
+    currentTime ++;
+    delay(2);
+  }
+  smpleDisplayWCursor("Elastic", 1, 20, false, true);
+  delay(60);
+
+  duration = 124;
+  currentTime = 62;
+  easedPosition = 52;
+  smpleDisplayWCursor("Circular", 1, 20, true, false);
+  circular.setDuration(duration);
+  circular.setTotalChangeInPosition(duration);
+  drawpixel(currentTime, 52, true, false);
+  for (int i = 0; i <= duration; i++) {
+    smpleDisplayWCursor("Circular", 1, 20, false, true);
+    easedPosition = back.easeIn(currentTime);
+    drawpixel(currentTime, (128 - easedPosition), false, true);
+    currentTime ++;
+    delay(2);
+  }
+  smpleDisplayWCursor("Circular", 1, 20, false, true);
+  delay(60);
+}
+
+// CURRENTLY BRO
+void compareInterpolations(double duration) {
+  u8g2.clearBuffer();
+  double currentTime = 0;
+  double change = 62;
+//  double subdivisions = round((change / duration));
+  double easedPosition[9] = {0,0,0,0,0,0,0,0,0};
+
+  linear.setDuration(duration);       /*Linear*/
+  linear.setTotalChangeInPosition(change);
+  quadratic.setDuration(duration);        /*Quadratic*/
+  quadratic.setTotalChangeInPosition(change);
+  quartic.setDuration(duration);        /*Quartic*/
+  quartic.setTotalChangeInPosition(change);
+  quintic.setDuration(duration);        /*Quintic*/
+  quintic.setTotalChangeInPosition(change);
+  exponential.setDuration(duration);        /*Exponential*/
+  exponential.setTotalChangeInPosition(change);
+  cubic.setDuration(duration);        /*Cubic*/
+  cubic.setTotalChangeInPosition(change);
+  sine.setDuration(duration);       /*Sine*/
+  sine.setTotalChangeInPosition(change);
+  bounce.setDuration(duration);       /*Bounce*/
+  bounce.setTotalChangeInPosition(change);
+  circular.setDuration(duration);       /*Circular*/
+  circular.setTotalChangeInPosition(change);
+  elastic.setDuration(duration);        /*Elastic*/
+  elastic.setTotalChangeInPosition(change);
+  for (int i = 0; i <= duration; i++) { // an attempt to get all of the interpolation algorithms firing at the same time
+    easedPosition[0] = linear.easeIn(currentTime);
+    easedPosition[1] = quadratic.easeIn(currentTime);
+    easedPosition[2] = quartic.easeIn(currentTime);
+    easedPosition[3] = quintic.easeIn(currentTime);
+    easedPosition[4] = exponential.easeIn(currentTime);
+    easedPosition[5] = cubic.easeIn(currentTime);
+    easedPosition[6] = sine.easeIn(currentTime);
+    easedPosition[7] = bounce.easeIn(currentTime);
+    easedPosition[8] = circular.easeIn(currentTime);
+    easedPosition[9] = elastic.easeIn(currentTime);
+    for (int j = 0; 1 <= 9; j++){
+      int k = ((j + 1) * j);
+      int h = (k * 7);
+      vertSquareAnimate(j, (60-(easedPosition[j])), h, false, false);
+      
+    }
+    currentTime ++;
+  }
+  delay(6);
+}
 
 /* generic function for mapping the faders to 16 or 8 bit values for the LED box I am using */
 void fadersToDmxWscaler(int bitRate, int masterFader) {
@@ -1135,9 +1398,6 @@ void fadersToDmxWscaler(int bitRate, int masterFader) {
 }
 
 /* Pockonsole Intro Animation */
-
-
-
 void introPage(displayMode dispmode) {
   switch (dispmode) {
     case POCKONSOLED:
@@ -1168,7 +1428,6 @@ void introPage(displayMode dispmode) {
       break;
   }
 }
-
 
 /* custom mapping for floats, which come up often in intensity values and division */
 float floatmap(float x, float in_min, float in_max, float out_min, float out_max)  {
